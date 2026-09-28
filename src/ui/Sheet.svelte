@@ -10,7 +10,16 @@
     onclose,
     children,
     footer,
-  }: { title: string; kind: string; onclose: () => void; children: Snippet; footer?: Snippet } = $props();
+    modal = true,
+  }: {
+    title: string;
+    kind: string;
+    onclose: () => void;
+    children: Snippet;
+    footer?: Snippet;
+    /** false のときは後ろを暗くせず、シートの外（水槽）も操作できる */
+    modal?: boolean;
+  } = $props();
 
   let height = $state(0);
   let section = $state<HTMLDivElement>();
@@ -36,8 +45,10 @@
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && onclose()} />
 
-<button class="backdrop" type="button" tabindex="-1" aria-label="閉じる" onclick={onclose}></button>
-<div class="sheet" data-kind={kind} role="dialog" aria-modal="true" aria-labelledby="sheet-title" bind:this={section} bind:clientHeight={height}>
+{#if modal}
+  <button class="backdrop" type="button" tabindex="-1" aria-label="閉じる" onclick={onclose}></button>
+{/if}
+<div class="sheet" data-kind={kind} role="dialog" aria-modal={modal} aria-labelledby="sheet-title" bind:this={section} bind:clientHeight={height}>
   <header>
     <h2 id="sheet-title">{title}</h2>
     <button class="icon-btn close" type="button" aria-label="閉じる" onclick={onclose}>{@html ICONS.close}</button>
@@ -84,6 +95,15 @@
   /* きせかえ中は上に水槽を広く見せるため、高さを固定 */
   .sheet[data-kind='dress'] {
     height: 54%;
+  }
+
+  /* 模様替え中は水槽を広く見せたいので低め */
+  .sheet[data-kind='decor'] {
+    height: min(46%, 360px);
+  }
+
+  .sheet[data-kind='zukan'] {
+    height: 84%;
   }
 
   @keyframes sheet-in {

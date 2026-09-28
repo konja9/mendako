@@ -49,6 +49,7 @@
       <button class="btn btn-small" type="button" onclick={dev.advanceHour}>時間を1時間進める</button>
       <button class="btn btn-small" type="button" onclick={dev.addPearls}>真珠 +100</button>
       <button class="btn btn-small" type="button" onclick={dev.addExp}>なかよし +100</button>
+      <button class="btn btn-small" type="button" onclick={dev.callVisitor}>生き物を呼ぶ</button>
     </div>
     <button class="btn btn-small btn-danger" type="button" onclick={pressReset}>
       {resetArmed ? '本当に消す？ もう一度押してね' : 'データを最初から'}

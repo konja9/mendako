@@ -4,12 +4,16 @@ import { writable } from 'svelte/store';
 import type { ScreenPoint } from './events';
 
 export type Mode = 'home' | 'catch';
-export type SheetKind = 'food' | 'dress' | 'settings';
+export type SheetKind = 'food' | 'dress' | 'settings' | 'decor' | 'zukan';
 
 export const mode = writable<Mode>('home');
 export const sheet = writable<SheetKind | null>(null);
 /** きせかえで試着中のアイテム */
 export const tryOn = writable<string | null>(null);
+/** 模様替えで選んでいる飾り（uid） */
+export const decorSelected = writable<string | null>(null);
+/** 模様替え・きせかえで「買う？」と聞いているもの */
+export const pendingBuy = writable<{ kind: 'decor' | 'floor'; id: string } | null>(null);
 /** 画面下を覆っているシートの高さ（px）。水槽をその分持ち上げる */
 export const bottomInset = writable(0);
 
@@ -25,6 +29,11 @@ export interface CatchHud {
 export const catchHud = writable<CatchHud>({ phase: 'intro', count: '3', time: 30, score: 0, pearls: 0, result: null });
 
 /** 描画側が提供する「めんだこの頭の位置（画面座標）」。ふきだしの位置合わせに使う */
-export const worldLink: { mendakoHead: () => ScreenPoint | null } = {
+export const worldLink: {
+  mendakoHead: () => ScreenPoint | null;
+  /** 選んでいる飾りの画面上の範囲（模様替えのボタンの位置合わせ用） */
+  decorRect: (uid: string) => { x: number; y: number; width: number; height: number } | null;
+} = {
   mendakoHead: () => null,
+  decorRect: () => null,
 };

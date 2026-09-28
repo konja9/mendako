@@ -245,6 +245,7 @@ svg {
 }
 
 .badge {
+  white-space: nowrap;
   padding: 1px 10px;
   border-radius: 99px;
   background: var(--anemone);

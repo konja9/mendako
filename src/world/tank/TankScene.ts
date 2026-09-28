@@ -1,24 +1,35 @@
 // 水槽（ホーム画面の海底）。座標は「横幅 TANK_W の論理座標、y=0 が海底の線（上がマイナス）」。
 // 画面幅に合わせて親コンテナごと拡大縮小されるので、機種が変わっても配置は同じ。
+// 重なり順：海底 → 飾り → 遊びに来た生き物 → めんだこ → 演出
 
-import { Container, Graphics, Sprite, Text } from 'pixi.js';
+import { Container, Graphics, Rectangle, Text } from 'pixi.js';
 import { expressionFor, MENDAKO_FOOT } from '../../art/mendako';
 import { conditionOf, stageFor } from '../../game/care';
+import { FLOOR_BY_ID } from '../../game/data/decor';
 import type { GameState } from '../../game/state';
-import { svgTexture } from '../textures';
+import { DecorLayer } from './DecorLayer';
 import { Effects } from './Effects';
 import { Mendako } from './Mendako';
+import { VisitorLayer } from './VisitorLayer';
 
 export const TANK_W = 400;
 /** めんだこの SVG（200）を水槽の中で何倍で表示するか */
 const MENDAKO_BASE = 1.25;
 
-const ROCK_SVG = `<svg viewBox="0 0 90 50" xmlns="http://www.w3.org/2000/svg"><path d="M6 48C2 34 12 20 28 18C36 6 58 6 66 18C80 20 90 34 86 48Z" fill="#17376a"/><path d="M26 24C34 14 52 12 60 20" stroke="#2b5190" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
-const SEAPEN_SVG = `<svg viewBox="0 0 40 96" xmlns="http://www.w3.org/2000/svg"><path d="M20 94Q18 56 21 8" stroke="#ffb7c9" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#ffb7c9" fill-opacity=".55"><ellipse cx="12" cy="22" rx="8" ry="3" transform="rotate(-25 12 22)"/><ellipse cx="29" cy="20" rx="8" ry="3" transform="rotate(25 29 20)"/><ellipse cx="11" cy="34" rx="9" ry="3.2" transform="rotate(-25 11 34)"/><ellipse cx="29" cy="32" rx="9" ry="3.2" transform="rotate(25 29 32)"/><ellipse cx="11" cy="46" rx="9" ry="3.2" transform="rotate(-25 11 46)"/><ellipse cx="29" cy="44" rx="9" ry="3.2" transform="rotate(25 29 44)"/><ellipse cx="12" cy="57" rx="7" ry="2.8" transform="rotate(-25 12 57)"/><ellipse cx="28" cy="56" rx="7" ry="2.8" transform="rotate(25 28 56)"/></g></svg>`;
+export interface TankCallbacks {
+  selectDecor(uid: string | null): void;
+  commitDecor(uid: string, x: number, y: number): void;
+  meetVisitor(uid: string, global: { x: number; y: number }): void;
+  bubble(global: { x: number; y: number }): void;
+}
 
 export class TankScene extends Container {
   readonly floor = new Graphics();
-  readonly props = new Container();
+  readonly specks = new Graphics();
+  /** 模様替え中に何もないところを押したら、選択をはずすための面 */
+  private readonly backdropHit = new Container();
+  readonly decor: DecorLayer;
+  readonly visitors: VisitorLayer;
   readonly shadow = new Graphics();
   readonly mendako: Mendako;
   readonly fx: Effects;
@@ -31,8 +42,10 @@ export class TankScene extends Container {
   private tilt = 0;
   private scaleNow = 0.8;
   private scaleTarget = 0.8;
-  private seaPen: Sprite | null = null;
   private time = 0;
+  private floorId = '';
+  private floorExtent = { xMin: 0, xMax: TANK_W, bottom: 200 };
+  private editing = false;
 
   /** きせかえ中など、真ん中でじっとしてほしいとき */
   focus = false;
@@ -40,13 +53,21 @@ export class TankScene extends Container {
   constructor(
     resolution: number,
     private reducedMotion: boolean,
+    cb: TankCallbacks,
   ) {
     super();
     this.mendako = new Mendako(resolution);
     this.mendako.eventMode = 'static';
     this.mendako.cursor = 'pointer';
     this.fx = new Effects(resolution, reducedMotion);
+    this.decor = new DecorLayer(resolution, { select: cb.selectDecor, commit: cb.commitDecor, bubble: cb.bubble });
+    this.visitors = new VisitorLayer(resolution, cb.meetVisitor);
     this.shadow.ellipse(0, 0, 48, 7).fill({ color: 0x020818, alpha: 0.45 });
+
+    this.backdropHit.hitArea = new Rectangle(-2000, -2000, 4400, 4400);
+    this.backdropHit.eventMode = 'none';
+    this.backdropHit.on('pointertap', () => cb.selectDecor(null));
+
     for (const [i, size] of [22, 17, 13].entries()) {
       const letter = new Text({
         text: i === 0 ? 'Z' : 'z',
@@ -56,24 +77,13 @@ export class TankScene extends Container {
       this.zzz.addChild(letter);
     }
     this.zzz.visible = false;
-    this.addChild(this.floor, this.props, this.shadow, this.mendako, this.fx, this.zzz);
-    this.addProps(resolution);
-  }
-
-  private async addProps(resolution: number) {
-    const [rock, seaPen] = await Promise.all([svgTexture(ROCK_SVG, 90, 50, resolution), svgTexture(SEAPEN_SVG, 40, 96, resolution)]);
-    const rockSprite = new Sprite(rock);
-    rockSprite.anchor.set(0.5, 1);
-    rockSprite.position.set(52, 2);
-    const penSprite = new Sprite(seaPen);
-    penSprite.anchor.set(0.5, 1);
-    penSprite.position.set(356, -6);
-    this.seaPen = penSprite;
-    this.props.addChild(rockSprite, penSprite);
+    this.addChild(this.floor, this.specks, this.backdropHit, this.decor, this.visitors, this.shadow, this.mendako, this.fx, this.zzz);
   }
 
   /** 海底の砂丘を、画面の左右いっぱい（xMin〜xMax）まで描く */
   drawFloor(xMin: number, xMax: number, bottom: number) {
+    this.floorExtent = { xMin, xMax, bottom };
+    const colors = FLOOR_BY_ID[this.floorId]?.colors ?? FLOOR_BY_ID.sand.colors;
     const g = this.floor.clear();
     const dune = (top: number, amp: number, phase: number, color: number) => {
       g.moveTo(xMin, top);
@@ -84,8 +94,16 @@ export class TankScene extends Container {
       }
       g.lineTo(xMax, bottom).lineTo(xMin, bottom).closePath().fill(color);
     };
-    dune(-30, 6, 0, 0x11305c);
-    dune(4, 5, 120, 0x0b2248);
+    dune(-40, 6, 0, colors.back);
+    dune(2, 5, 120, colors.front);
+
+    // 海底の小石（海底の種類で色が変わる）。毎回同じ並びになるよう固定の式で置く
+    const s = this.specks.clear();
+    for (let i = 0; i < 26; i++) {
+      const x = xMin + ((i * 97) % 1000) / 1000 * (xMax - xMin);
+      const y = -26 + ((i * 53) % 60);
+      s.ellipse(x, y, 3 + (i % 3), 1.6 + (i % 2)).fill({ color: colors.speck, alpha: 0.55 });
+    }
   }
 
   /** ゲームの状態を見た目に反映する */
@@ -96,6 +114,22 @@ export class TankScene extends Container {
     this.mendako.setBaseExpression(expressionFor(conditionOf(state)));
     this.mendako.sleeping = state.sleeping;
     this.scaleTarget = stageFor(state.exp).scale;
+    this.decor.sync(state.decor.placed);
+    this.visitors.sync(state.visitors);
+    if (state.decor.floor !== this.floorId) {
+      this.floorId = state.decor.floor;
+      const { xMin, xMax, bottom } = this.floorExtent;
+      this.drawFloor(xMin, xMax, bottom);
+    }
+  }
+
+  /** 模様替え中は飾りを動かせるようにし、めんだこと生き物は薄くして押せなくする */
+  setEditing(on: boolean) {
+    this.editing = on;
+    this.decor.setEditing(on);
+    this.visitors.setInteractive(!on);
+    this.backdropHit.eventMode = on ? 'static' : 'none';
+    this.mendako.eventMode = on ? 'none' : 'static';
   }
 
   /** めんだこの頭のてっぺんの画面座標 */
@@ -134,24 +168,31 @@ export class TankScene extends Container {
     this.mendako.rotation = this.tilt;
     this.mendako.update(dt);
 
+    // 模様替え中は、めんだこと生き物を薄くして飾りを見やすくする
+    const fade = this.editing ? 0.3 : 1;
+    this.mendako.alpha += (fade - this.mendako.alpha) * Math.min(1, dt * 6);
+    this.visitors.alpha = this.mendako.alpha;
+    this.shadow.alpha = this.mendako.alpha;
+
     // 影は海底に。浮いているほど小さく薄く
     const lift = -this.pos.y + (MENDAKO_FOOT.y - this.mendako.inner.position.y);
     this.shadow.position.set(this.pos.x, 10);
     this.shadow.scale.set(this.scaleNow * Math.max(0.55, 1 - lift / 160));
-    this.shadow.alpha = Math.max(0.3, 1 - lift / 120);
+    this.shadow.alpha *= Math.max(0.3, 1 - lift / 120);
 
     this.zzz.visible = this.mendako.sleeping;
     if (this.zzz.visible) {
       const head = this.toLocal(this.headGlobal());
       this.zzz.position.set(head.x + 36, head.y + 6);
       this.zzz.children.forEach((letter, i) => {
-        const k = (((this.time + i) % 3) + 3) % 3 / 3;
-        letter.position.set(k * 26, -k * 54);
-        letter.alpha = k < 0.2 ? k / 0.2 : 1 - (k - 0.2) / 0.8;
+        const t = ((this.time + i) % 3) / 3;
+        letter.position.set(t * 26, -t * 54);
+        letter.alpha = t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8;
       });
     }
 
-    if (this.seaPen && !this.reducedMotion) this.seaPen.rotation = Math.sin((this.time / 6) * Math.PI) * 0.07;
+    this.decor.update(this.reducedMotion ? 0 : dt);
+    this.visitors.update(this.reducedMotion ? 0 : dt);
     this.fx.update(dt);
   }
 }

@@ -1,26 +1,18 @@
 <script lang="ts">
-  import { game, petMendako, startPlay, toggleSleep } from '../app/actions';
+  import { game, openSheet, startPlay } from '../app/actions';
   import { bus } from '../app/events';
-  import { sheet } from '../app/ui-state';
   import { ICONS, type IconName } from '../art/icons';
 
   type Action = { id: string; label: string; icon: IconName; tone: string; needsAwake: boolean; run: () => void };
 
+  // なでるは、めんだこを直接タップ。ねる・図鑑は上のバーにある
   const sleeping = $derived($game.sleeping);
-  const actions: Action[] = $derived([
-    { id: 'food', label: 'ごはん', icon: 'food', tone: 'var(--coral)', needsAwake: true, run: () => sheet.set('food') },
-    { id: 'pet', label: 'なでる', icon: 'pet', tone: 'var(--anemone)', needsAwake: true, run: () => petMendako() },
+  const actions: Action[] = [
+    { id: 'food', label: 'ごはん', icon: 'food', tone: 'var(--coral)', needsAwake: true, run: () => openSheet('food') },
     { id: 'play', label: 'あそぶ', icon: 'play', tone: 'var(--mint)', needsAwake: true, run: startPlay },
-    { id: 'dress', label: 'きせかえ', icon: 'dress', tone: 'var(--lilac)', needsAwake: false, run: () => sheet.set('dress') },
-    {
-      id: 'sleep',
-      label: sleeping ? 'おきる' : 'ねる',
-      icon: sleeping ? 'sun' : 'moon',
-      tone: 'var(--lantern)',
-      needsAwake: false,
-      run: toggleSleep,
-    },
-  ]);
+    { id: 'dress', label: 'きせかえ', icon: 'dress', tone: 'var(--lilac)', needsAwake: false, run: () => openSheet('dress') },
+    { id: 'decor', label: 'もようがえ', icon: 'decor', tone: 'var(--anemone)', needsAwake: false, run: () => openSheet('decor') },
+  ];
 
   function press(action: Action) {
     if (action.needsAwake && sleeping) {
@@ -50,7 +42,7 @@
 <style>
   .actions {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     pointer-events: auto;
   }

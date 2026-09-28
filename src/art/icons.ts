@@ -5,7 +5,7 @@ import type { FoodId } from '../game/data/care';
 const ui = (body: string, extra = '') =>
   `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${body}</svg>`;
 
-export type IconName = 'food' | 'pet' | 'play' | 'dress' | 'moon' | 'sun' | 'menu' | 'close';
+export type IconName = 'food' | 'pet' | 'play' | 'dress' | 'moon' | 'sun' | 'menu' | 'close' | 'decor' | 'book' | 'flip' | 'store' | 'check' | 'back';
 
 export const ICONS: Record<IconName, string> = {
   food: ui(
@@ -21,6 +21,17 @@ export const ICONS: Record<IconName, string> = {
     '<circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity=".18"/><path d="M12 2.5V4.5M12 19.5V21.5M2.5 12H4.5M19.5 12H21.5M5.3 5.3L6.7 6.7M17.3 17.3L18.7 18.7M5.3 18.7L6.7 17.3M17.3 6.7L18.7 5.3"/>',
   ),
   menu: ui('<path d="M5 7H19M5 12H19M5 17H19"/>'),
+  // 模様替え：海底のサンゴと岩
+  decor: ui(
+    '<path d="M3 20H21"/><path d="M4 20C4 16 7 14 10 15C12 13 15 14 15 17C17 17 18 18 18 20Z" fill="currentColor" fill-opacity=".18"/><path d="M17 20V9M17 13L14 10M17 11L20 7M14 10L13 7" />',
+  ),
+  book: ui(
+    '<path d="M4 5C6.5 4 9.5 4 12 6C14.5 4 17.5 4 20 5V19C17.5 18 14.5 18 12 20C9.5 18 6.5 18 4 19Z" fill="currentColor" fill-opacity=".18"/><path d="M12 6V20"/>',
+  ),
+  flip: ui('<path d="M12 4V20"/><path d="M9 7L4 12L9 17Z" fill="currentColor" fill-opacity=".18"/><path d="M15 7L20 12L15 17Z"/>'),
+  store: ui('<path d="M4 9H20L18.5 20H5.5Z" fill="currentColor" fill-opacity=".18"/><path d="M9 9V6A3 3 0 0 1 15 6V9"/>'),
+  check: ui('<path d="M5 12.5L10 17L19 7"/>'),
+  back: ui('<path d="M15 5L8 12L15 19"/>'),
   close: ui('<path d="M6 6L18 18M18 6L6 18"/>'),
 };
 

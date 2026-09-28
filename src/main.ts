@@ -28,6 +28,9 @@ const world = new World({
   measureFloor,
 });
 
+// 開発サーバーのときだけ、確認用に描画の中身をのぞけるようにする
+if (import.meta.env.DEV) (window as unknown as { __world: World }).__world = world;
+
 try {
   await world.init();
   // 文字の読み込みやアドレスバーの出入りで、下のボタンの位置が変わったら測り直す

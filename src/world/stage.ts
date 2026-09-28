@@ -3,9 +3,9 @@
 
 import { Application, Container, Graphics } from 'pixi.js';
 import { get } from 'svelte/store';
-import { finishCatch, game, petMendako } from '../app/actions';
+import { finishCatch, game, meetVisitor, moveDecor, petMendako } from '../app/actions';
 import { bus, type ScreenPoint } from '../app/events';
-import { bottomInset, catchHud, mode, sheet, tryOn, worldLink } from '../app/ui-state';
+import { bottomInset, catchHud, decorSelected, mode, sheet, tryOn, worldLink } from '../app/ui-state';
 import { ITEM_BY_ID } from '../game/data/outfits';
 import { CatchScene } from './catch/CatchScene';
 import { Backdrop } from './tank/Backdrop';
@@ -56,7 +56,12 @@ export class World {
     this.textureResolution = Math.min(3, resolution * 1.4);
     this.backdrop = new Backdrop();
     this.ocean = new Ocean(resolution, this.options.reducedMotion);
-    this.tank = new TankScene(this.textureResolution, this.options.reducedMotion);
+    this.tank = new TankScene(this.textureResolution, this.options.reducedMotion, {
+      selectDecor: (uid) => decorSelected.set(uid),
+      commitDecor: moveDecor,
+      meetVisitor,
+      bubble: (p) => this.ocean.bubblesAt(p.x, p.y, 2),
+    });
     this.pan.addChild(this.tank);
     this.dim.alpha = 0;
     this.app.stage.addChild(this.backdrop, this.ocean, this.pan, this.dim);
@@ -81,8 +86,10 @@ export class World {
     tryOn.subscribe(syncTank);
     sheet.subscribe((kind) => {
       this.tank.focus = kind === 'dress';
+      this.tank.setEditing(kind === 'decor');
       this.updatePanTarget();
     });
+    decorSelected.subscribe((uid) => this.tank.decor.setSelected(uid));
     bottomInset.subscribe(() => this.updatePanTarget());
     mode.subscribe((m) => (m === 'catch' ? this.startCatch() : this.endCatch()));
 
@@ -108,13 +115,14 @@ export class World {
       this.ocean.bubblesAt(h.x, h.y - 10, 3);
     });
     worldLink.mendakoHead = () => (get(mode) === 'home' ? head() : null);
+    worldLink.decorRect = (uid) => this.tank.decor.rectOf(uid);
   }
 
   private updatePanTarget() {
     const inset = get(bottomInset);
     const kind = get(sheet);
-    // ごはんときせかえのシートでは、めんだこが隠れないよう水槽を持ち上げる
-    const raise = inset > 0 && (kind === 'food' || kind === 'dress');
+    // ごはん・きせかえ・模様替えのシートでは、水槽が隠れないよう持ち上げる
+    const raise = inset > 0 && (kind === 'food' || kind === 'dress' || kind === 'decor');
     this.panTarget = raise ? Math.max(0, this.layout.floorY - (this.layout.h - inset - 14)) : 0;
   }
 
