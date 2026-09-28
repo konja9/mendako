@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>しんかいぷかぷか</title>
+<meta name="description" content="めんだこを そだてて きせかえする しんかいいきもの いくせいゲーム">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700&display=swap">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div class="sea" aria-hidden="true">
+  <div class="rays"></div>
+  <canvas id="ocean"></canvas>
+  <div class="floor">
+    <svg class="dunes" viewBox="0 0 400 120" preserveAspectRatio="none">
+      <path d="M0 42C60 26 120 40 200 34C280 28 340 44 400 36V120H0Z" fill="#11305c"/>
+      <path d="M0 70C80 54 150 68 220 62C300 56 350 70 400 64V120H0Z" fill="#0b2248"/>
+    </svg>
+    <svg class="deco deco-rock" viewBox="0 0 90 50">
+      <path d="M6 48C2 34 12 20 28 18C36 6 58 6 66 18C80 20 90 34 86 48Z" fill="#17376a"/>
+      <path d="M26 24C34 14 52 12 60 20" stroke="#2b5190" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+    <svg class="deco deco-seapen" viewBox="0 0 40 96">
+      <path d="M20 94Q18 56 21 8" stroke="#ffb7c9" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <g fill="#ffb7c9" fill-opacity=".55">
+        <ellipse cx="12" cy="22" rx="8" ry="3" transform="rotate(-25 12 22)"/><ellipse cx="29" cy="20" rx="8" ry="3" transform="rotate(25 29 20)"/>
+        <ellipse cx="11" cy="34" rx="9" ry="3.2" transform="rotate(-25 11 34)"/><ellipse cx="29" cy="32" rx="9" ry="3.2" transform="rotate(25 29 32)"/>
+        <ellipse cx="11" cy="46" rx="9" ry="3.2" transform="rotate(-25 11 46)"/><ellipse cx="29" cy="44" rx="9" ry="3.2" transform="rotate(25 29 44)"/>
+        <ellipse cx="12" cy="57" rx="7" ry="2.8" transform="rotate(-25 12 57)"/><ellipse cx="28" cy="56" rx="7" ry="2.8" transform="rotate(25 28 56)"/>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="hud">
+    <button class="hud-name" id="nameBtn" type="button" aria-label="なまえと きろく">
+      <span class="name" id="name">めんちゃん</span>
+      <span class="hud-sub"><span class="stage-chip" id="stageChip">あかちゃん</span><span class="depth">すいしん 400m</span></span>
+    </button>
+    <span class="pearls" role="img" aria-label="もっている しんじゅ"><span data-icon="pearl"></span><b id="pearlCount">0</b></span>
+    <button class="icon-btn" id="menuBtn" type="button" aria-label="せってい" data-icon="menu"></button>
+  </header>
+
+  <section class="status" aria-label="ようす">
+    <div class="gauges">
+      <div class="gauge" data-stat="hunger" role="meter" aria-label="おなか" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="g-label">おなか</span><span class="g-track"><span class="g-fill"></span></span>
+      </div>
+      <div class="gauge" data-stat="mood" role="meter" aria-label="ごきげん" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="g-label">ごきげん</span><span class="g-track"><span class="g-fill"></span></span>
+      </div>
+      <div class="gauge" data-stat="energy" role="meter" aria-label="げんき" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <span class="g-label">げんき</span><span class="g-track"><span class="g-fill"></span></span>
+      </div>
+    </div>
+    <div class="bond">
+      <span class="bond-label">なかよし</span>
+      <span class="bond-text" id="bondText"></span>
+      <span class="bond-track"><span class="bond-fill" id="bondFill"></span></span>
+    </div>
+  </section>
+
+  <main class="stage" id="stage">
+    <p class="toast" id="toast" role="status" aria-live="polite"></p>
+    <p class="bubble" id="bubble" aria-live="polite"></p>
+    <div class="actor" id="actor">
+      <span class="zzz" aria-hidden="true"><i>Z</i><i>z</i><i>z</i></span>
+      <span class="shadow" aria-hidden="true"></span>
+      <div class="scaler" id="scaler">
+        <button class="mendako" id="mendako" type="button"></button>
+      </div>
+    </div>
+    <div class="fx" id="fx" aria-hidden="true"></div>
+  </main>
+
+  <nav class="actions" aria-label="おせわ">
+    <button class="action" type="button" data-action="food"><span class="a-icon" data-icon="food"></span><span class="a-label">ごはん</span></button>
+    <button class="action" type="button" data-action="pet"><span class="a-icon" data-icon="pet"></span><span class="a-label">なでる</span></button>
+    <button class="action" type="button" data-action="play"><span class="a-icon" data-icon="play"></span><span class="a-label">あそぶ</span></button>
+    <button class="action" type="button" data-action="dress"><span class="a-icon" data-icon="dress"></span><span class="a-label">きせかえ</span></button>
+    <button class="action" type="button" data-action="sleep"><span class="a-icon" data-icon="moon"></span><span class="a-label">ねる</span></button>
+  </nav>
+</div>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <header class="sheet-head">
+    <h2 id="sheetTitle"></h2>
+    <button class="icon-btn sheet-close" type="button" aria-label="とじる" data-icon="close"></button>
+  </header>
+  <div class="sheet-body" id="sheetBody"></div>
+  <footer class="sheet-foot" id="sheetFoot" hidden></footer>
+</section>
+<div class="celebrate" id="celebrate" hidden></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "shinkai-pukapuka",
+  "version": "0.1.0",
+  "private": true,
+  "description": "深海いきもの育成＆きせかえブラウザゲーム（最初のキャラクターはめんだこ）",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
