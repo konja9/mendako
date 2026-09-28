@@ -1,9 +1,13 @@
 // UI アイコンとごはんのアイコン（SVG 文字列）。
 
-const ui = (body, extra = '') =>
+import type { FoodId } from '../game/data/care';
+
+const ui = (body: string, extra = '') =>
   `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${body}</svg>`;
 
-export const ICONS = {
+export type IconName = 'food' | 'pet' | 'play' | 'dress' | 'moon' | 'sun' | 'menu' | 'close';
+
+export const ICONS: Record<IconName, string> = {
   food: ui(
     '<path d="M3.5 11.5H20.5A8.5 7 0 0 1 3.5 11.5Z" fill="currentColor" fill-opacity=".18"/><circle cx="8" cy="7.2" r="1.3" fill="currentColor"/><circle cx="12" cy="5.2" r="1.3" fill="currentColor"/><circle cx="16" cy="7.2" r="1.3" fill="currentColor"/>',
   ),
@@ -25,7 +29,7 @@ export const PEARL =
 
 const LINE = '#4a2c3f';
 
-export const FOOD_ICONS = {
+export const FOOD_ICONS: Record<FoodId, string> = {
   // カイアシ類にはノープリウス眼という赤い目がひとつある。
   copepod: `<svg viewBox="0 0 48 48" aria-hidden="true">
     <path d="M20 13Q8 7 4 14M28 13Q40 7 44 14" stroke="${LINE}" stroke-width="2" fill="none" stroke-linecap="round"/>

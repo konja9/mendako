@@ -1,0 +1,293 @@
+/* しんかいぷかぷか — 深海の青を地に、めんだこのコーラルとパステルを差し色に。
+   舞台が深海なので、あえてダークテーマ一本で作っている。スマホ縦画面が基準。 */
+
+:root {
+  color-scheme: dark;
+  --sea-top: #1b4f8a;
+  --sea-mid: #0e2d5c;
+  --sea-deep: #07173a;
+  --abyss: #050f29;
+  --pearl: #f8f4ff;
+  --pearl-2: #ebe3fb;
+  --ink: #2b2352;
+  --ink-soft: #625a8c;
+  --coral: #ff8d6e;
+  --anemone: #ff86b5;
+  --lantern: #ffd66b;
+  --mint: #7fe0c4;
+  --lilac: #b9a5f6;
+  --glow: #8fe3ff;
+  --on-sea: #eef6ff;
+  --on-sea-soft: #b3cbeb;
+  --glass: rgba(255, 255, 255, 0.1);
+  --glass-line: rgba(255, 255, 255, 0.22);
+  --danger: #c2416f;
+  --font-pop: 'Mochiy Pop One', 'Hiragino Maru Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+  --font-body: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+  --column: 430px;
+  --tap: 44px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  background: var(--abyss);
+  color: var(--on-sea);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.5;
+  word-break: auto-phrase;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  touch-action: manipulation;
+}
+
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--glow);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+}
+
+#world {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#world canvas {
+  display: block;
+  touch-action: none;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  pointer-events: none;
+}
+
+.world-error {
+  position: fixed;
+  inset: 40% 16px auto;
+  text-align: center;
+  color: var(--on-sea);
+}
+
+/* ---------- 共通の部品 ---------- */
+
+.icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--glass-line);
+  background: var(--glass);
+  color: var(--on-sea);
+  cursor: pointer;
+}
+
+.icon-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: var(--tap);
+  padding: 0 20px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--pearl-2);
+  color: var(--ink);
+  font-family: var(--font-pop);
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(43, 35, 82, 0.18);
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(43, 35, 82, 0.18);
+}
+
+.btn-primary {
+  background: var(--anemone);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-small {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.btn-danger {
+  background: #ffd9df;
+  color: #9b2446;
+}
+
+.pearl-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* ---------- 下から出るシートの中身（カード・タブ） ---------- */
+
+.sheet-hint {
+  margin: 6px 2px 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 8px 12px;
+  border: 2px solid var(--pearl-2);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.card:active {
+  transform: scale(0.97);
+}
+
+.card[aria-disabled='true'] {
+  opacity: 0.5;
+}
+
+.card-name {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.card-note {
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-wrap: balance;
+}
+
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-pop);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.price .pearl-icon,
+.btn .pearl-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.price.is-free {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  color: #2f8a70;
+}
+
+.badge {
+  padding: 1px 10px;
+  border-radius: 99px;
+  background: var(--anemone);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.is-owned {
+  background: var(--mint);
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+}
+
+.tab {
+  flex: none;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 99px;
+  background: var(--pearl-2);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--pearl);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

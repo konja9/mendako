@@ -1,7 +1,23 @@
 // めんだこの 2D 描画（SVG 文字列）。座標は viewBox 0 0 200 200 基準。
-// 同じ SVG を画面表示・きせかえプレビュー・ミニゲームの canvas で使い回す。
+// 同じ SVG を、きせかえ一覧のプレビュー（DOM）と Pixi のテクスチャの両方で使う。
+// Pixi ではヒレを動かすため、部位（左ヒレ・右ヒレ・からだ）ごとに書き出せる。
 
-export const PALETTES = {
+import type { Condition } from '../game/care';
+import type { Equipped } from '../game/data/outfits';
+
+export interface Palette {
+  body: string;
+  skirt: string;
+  fin: string;
+  finIn: string;
+  line: string;
+  cheek: string;
+}
+
+export type Expression = 'normal' | 'great' | 'hungry' | 'sad' | 'happy' | 'eat' | 'sleep' | 'tired' | 'tickled';
+export type MendakoPart = 'all' | 'finL' | 'finR' | 'body';
+
+export const PALETTES: Record<string, Palette> = {
   'color-coral': { body: '#ff8d6e', skirt: '#f06f5a', fin: '#ffa085', finIn: '#ffc6b3', line: '#7a2d38', cheek: '#ff5c86' },
   'color-sakura': { body: '#ffb3c7', skirt: '#f693b0', fin: '#ffc3d3', finIn: '#ffe2ea', line: '#7d3352', cheek: '#ff6f9c' },
   'color-lavender': { body: '#b9a5f6', skirt: '#9d88e8', fin: '#c9b9fa', finIn: '#e6defd', line: '#3d2f78', cheek: '#ff7fb4' },
@@ -11,16 +27,22 @@ export const PALETTES = {
 const EYE_DARK = '#2a1b2e';
 const MOUTH_RED = '#b83a55';
 const EYES = [78, 122];
+// ヒレの付け根（回転の中心）。Pixi でヒレを動かすときに使う。
+export const FIN_PIVOTS = { finL: { x: 67, y: 70 }, finR: { x: 133, y: 70 } } as const;
+// 足もと（スカートのいちばん下の中央）
+export const MENDAKO_FOOT = { x: 100, y: 156 } as const;
 const EYE_Y = 100;
 
 // 調子（conditionOf の値）から表情を選ぶ。
-export function expressionFor(condition) {
-  return { sleep: 'sleep', hungry: 'hungry', tired: 'tired', sad: 'sad', great: 'great' }[condition] ?? 'normal';
+export function expressionFor(condition: Condition): Expression {
+  const map: Partial<Record<Condition, Expression>> = { sleep: 'sleep', hungry: 'hungry', tired: 'tired', sad: 'sad', great: 'great' };
+  return map[condition] ?? 'normal';
 }
 
-const OPEN_EYES = new Set(['normal', 'great', 'hungry', 'sad']);
+// 目が開いている表情（まばたきさせる対象）
+export const OPEN_EYES = new Set<Expression>(['normal', 'great', 'hungry', 'sad']);
 
-function eyes(expression, p) {
+function eyes(expression: Expression, p: Palette): string {
   const stroke = `stroke="${EYE_DARK}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
   if (OPEN_EYES.has(expression)) {
     const shine = expression === 'sad' ? 4 : 3.3;
@@ -52,7 +74,7 @@ function eyes(expression, p) {
   return `<path d="M72 94 L84 100 L72 106" ${stroke}/><path d="M128 94 L116 100 L128 106" ${stroke}/>`;
 }
 
-function mouth(expression, p) {
+function mouth(expression: Expression, p: Palette): string {
   const line = `stroke="${p.line}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
   switch (expression) {
     case 'great':
@@ -75,13 +97,13 @@ function mouth(expression, p) {
   }
 }
 
-function heartPath(cx, cy, s) {
-  const pt = (x, y) => `${(cx + x * s).toFixed(1)} ${(cy + y * s).toFixed(1)}`;
+function heartPath(cx: number, cy: number, s: number): string {
+  const pt = (x: number, y: number) => `${(cx + x * s).toFixed(1)} ${(cy + y * s).toFixed(1)}`;
   return `M${pt(0, -0.35)} C${pt(-0.2, -0.9)} ${pt(-1, -0.75)} ${pt(-1, -0.15)} C${pt(-1, 0.35)} ${pt(-0.45, 0.7)} ${pt(0, 1)} C${pt(0.45, 0.7)} ${pt(1, 0.35)} ${pt(1, -0.15)} C${pt(1, -0.75)} ${pt(0.2, -0.9)} ${pt(0, -0.35)} Z`;
 }
 
-function starPath(cx, cy, outer, inner, rotateDeg) {
-  const points = [];
+function starPath(cx: number, cy: number, outer: number, inner: number, rotateDeg: number): string {
+  const points: string[] = [];
   for (let i = 0; i < 10; i++) {
     const r = i % 2 === 0 ? outer : inner;
     const a = ((rotateDeg + i * 36 - 90) * Math.PI) / 180;
@@ -90,8 +112,8 @@ function starPath(cx, cy, outer, inner, rotateDeg) {
   return `M${points.join(' L')} Z`;
 }
 
-function pearlsAlong(p) {
-  const out = [];
+function pearlsAlong(p: Palette): string {
+  const out: string[] = [];
   const count = 13;
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1);
@@ -104,7 +126,7 @@ function pearlsAlong(p) {
   return out.join('');
 }
 
-const OUTFITS = {
+const OUTFITS: Record<string, (p: Palette) => string> = {
   ribbon: (p) => `<g transform="rotate(16 120 48)" stroke="${p.line}" stroke-width="2.5" stroke-linejoin="round">
       <path d="M120 48 C108 34 96 40 100 50 C102 58 112 56 120 48 Z" fill="#ff86b5"/>
       <path d="M120 48 C132 34 144 40 140 50 C138 58 128 56 120 48 Z" fill="#ff86b5"/>
@@ -151,16 +173,34 @@ const OUTFITS = {
 const BODY = 'M38 112 C36 70 66 48 100 48 C134 48 164 70 162 112 C166 124 172 136 168 144 Q156 156 142 147 Q128 157 114 148 Q100 158 86 148 Q72 157 58 147 Q44 156 32 144 C28 136 34 124 38 112 Z';
 const SKIRT = 'M37 116 Q100 136 163 116 C167 126 172 136 168 144 Q156 156 142 147 Q128 157 114 148 Q100 158 86 148 Q72 157 58 147 Q44 156 32 144 C28 136 33 126 37 116 Z';
 
-export function mendakoSVG({ equipped = {}, expression = 'normal', label = 'めんだこ', size = null } = {}) {
-  const p = PALETTES[equipped.color] ?? PALETTES['color-coral'];
-  const wear = (slot) => (equipped[slot] && OUTFITS[equipped[slot]] ? OUTFITS[equipped[slot]](p) : '');
+export interface MendakoOptions {
+  equipped?: Partial<Equipped>;
+  expression?: Expression;
+  label?: string;
+  /** 画像として使うときのピクセルサイズ（width/height 属性） */
+  size?: number | null;
+  part?: MendakoPart;
+  /** まばたき中（目だけ閉じる） */
+  blink?: boolean;
+}
+
+export function mendakoSVG({ equipped = {}, expression = 'normal', label = 'めんだこ', size = null, part = 'all', blink = false }: MendakoOptions = {}): string {
+  const p = PALETTES[equipped.color ?? ''] ?? PALETTES['color-coral'];
+  const wear = (slot: 'head' | 'face' | 'neck') => {
+    const id = equipped[slot];
+    return id && OUTFITS[id] ? OUTFITS[id](p) : '';
+  };
   const finStroke = `stroke="${p.line}" stroke-width="3"`;
   const dims = size ? ` width="${size}" height="${size}"` : '';
-  return `<svg class="m-svg" viewBox="0 0 200 200"${dims} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">
-  <g class="m-fin m-fin-l"><ellipse cx="56" cy="62" rx="17" ry="11.5" transform="rotate(-38 56 62)" fill="${p.fin}" ${finStroke}/>
-    <ellipse cx="54" cy="61" rx="9" ry="5.2" transform="rotate(-38 54 61)" fill="${p.finIn}"/></g>
-  <g class="m-fin m-fin-r"><ellipse cx="144" cy="62" rx="17" ry="11.5" transform="rotate(38 144 62)" fill="${p.fin}" ${finStroke}/>
-    <ellipse cx="146" cy="61" rx="9" ry="5.2" transform="rotate(38 146 61)" fill="${p.finIn}"/></g>
+  const finL = `<g class="m-fin m-fin-l"><ellipse cx="56" cy="62" rx="17" ry="11.5" transform="rotate(-38 56 62)" fill="${p.fin}" ${finStroke}/>
+    <ellipse cx="54" cy="61" rx="9" ry="5.2" transform="rotate(-38 54 61)" fill="${p.finIn}"/></g>`;
+  const finR = `<g class="m-fin m-fin-r"><ellipse cx="144" cy="62" rx="17" ry="11.5" transform="rotate(38 144 62)" fill="${p.fin}" ${finStroke}/>
+    <ellipse cx="146" cy="61" rx="9" ry="5.2" transform="rotate(38 146 61)" fill="${p.finIn}"/></g>`;
+  const open = `<svg class="m-svg" viewBox="0 0 200 200"${dims} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${label}">`;
+  if (part === 'finL') return `${open}${finL}</svg>`;
+  if (part === 'finR') return `${open}${finR}</svg>`;
+  return `${open}
+  ${part === 'all' ? finL + finR : ''}
   <path d="${BODY}" fill="${p.body}"/>
   <path d="${SKIRT}" fill="${p.skirt}"/>
   <path d="${BODY}" fill="none" stroke="${p.line}" stroke-width="3" stroke-linejoin="round"/>
@@ -168,18 +208,12 @@ export function mendakoSVG({ equipped = {}, expression = 'normal', label = 'め�
   <circle cx="88" cy="60" r="3" fill="#fff" opacity=".45"/>
   <ellipse cx="62" cy="114" rx="8" ry="4.5" fill="${p.cheek}" opacity=".55"/>
   <ellipse cx="138" cy="114" rx="8" ry="4.5" fill="${p.cheek}" opacity=".55"/>
-  ${eyes(expression, p)}
+  ${eyes(blink ? 'sleep' : expression, p)}
   ${mouth(expression, p)}
   ${wear('neck')}${wear('face')}${wear('head')}
 </svg>`;
 }
 
-// canvas で使うための画像。読み込み完了を待つ Promise を返す。
-export function mendakoImage(options) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(mendakoSVG({ size: 200, ...options }))}`;
-  });
+export function svgDataUrl(svg: string): string {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
