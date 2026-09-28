@@ -8,9 +8,8 @@
   import { zukanProgress } from '../../game/visitors';
   import Sheet from '../Sheet.svelte';
 
-  // 探索でしか会えない生き物（Phase 3）は、まだ図鑑に並べない
-  const list = CREATURES.filter((c) => c.meet !== 'dive');
-  const DEPTH_MAX = 2500;
+  const list = CREATURES;
+  const DEPTH_MAX = 4000;
   const HOME_DEPTH = 400;
 
   let detail = $state<string | null>(null);
@@ -44,7 +43,7 @@
               <span class="home" style:left={pct(HOME_DEPTH)}></span>
             </span>
             <span class="scale" aria-hidden="true">
-              {#each [0, 1000, 2000] as m (m)}<span style:left={pct(m)}>{m === 2000 ? '2000m' : m}</span>{/each}
+              {#each [0, 1000, 2000, 3000] as m (m)}<span style:left={pct(m)}>{m === 3000 ? '3000m' : m}</span>{/each}
             </span>
             <span class="legend">縦の線は、めんだこの水槽の深さ（{HOME_DEPTH}m）</span>
           </dd>
@@ -80,7 +79,7 @@
         {/if}
       {/each}
     </div>
-    <p class="sheet-hint">水槽に飾りを置くと、好きな生き物が遊びに来るよ。来たらタップしてね。</p>
+    <p class="sheet-hint">水槽に飾りを置くと、好きな生き物が遊びに来るよ。来たらタップしてね。「もぐる」で深い海に行くと、ほかの生き物にも会える。</p>
   {/if}
 </Sheet>
 

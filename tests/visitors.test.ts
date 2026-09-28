@@ -101,7 +101,7 @@ describe('会う・図鑑', () => {
 
   test('発見数はめんだこを含めて数える', () => {
     const s = createState(T0);
-    expect(zukanProgress(s)).toEqual({ found: 1, total: 10 });
+    expect(zukanProgress(s)).toEqual({ found: 1, total: 17 });
   });
 
   test('保存データの来訪者と図鑑を読み込む（知らない生き物は外す）', () => {

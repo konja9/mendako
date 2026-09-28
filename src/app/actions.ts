@@ -6,12 +6,15 @@ import * as Care from '../game/care';
 import type { FoodId } from '../game/data/care';
 import { DECOR_BY_ID, FLOOR_BY_ID, MAX_PLACED } from '../game/data/decor';
 import * as Decor from '../game/decor';
+import * as Dive from '../game/dive';
+import { ZONE_BY_ID } from '../game/data/zones';
+import { MATERIAL_BY_ID } from '../game/data/materials';
 import { clearSave, loadSave, writeSave } from '../game/save';
 import { createState, normalizeState } from '../game/state';
 import { createStore } from '../game/store';
 import * as Visitors from '../game/visitors';
 import { bus, type ScreenPoint } from './events';
-import { catchHud, decorSelected, mode, pendingBuy, sheet, tryOn, type SheetKind } from './ui-state';
+import { catchHud, decorSelected, diveHud, mode, pendingBuy, sheet, tryOn, type SheetKind } from './ui-state';
 
 export const game = createStore(normalizeState(loadSave()), writeSave);
 const away = game.update((s) => ({ ...Care.tick(s), arrivals: Visitors.rollVisitors(s) }));
@@ -170,6 +173,67 @@ export function buyTryOn() {
   bus.emit('express', { expression: 'happy', ms: 1400 });
   bus.emit('sparkle', 4);
 }
+
+// ---------- 深海探索 ----------
+
+/** 潜る準備ができたゾーン（描画側がこれを見て探索を始める） */
+export let diveSetup: { zone: import('../game/data/zones').ZoneDef; plan: Dive.PlanItem[] } | null = null;
+let lastDive: Dive.DiveReward | null = null;
+
+export function startDive(zoneId: string) {
+  const result = game.update((s) => Dive.startDive(s, zoneId));
+  if (!result.ok) {
+    const msg: Record<string, string> = {
+      sleeping: FAIL.sleeping,
+      tired: `げんきが${Dive.DIVE_ENERGY}ないと潜れないよ。寝かせてあげよう`,
+      locked: '図鑑の生き物をもっと見つけると行けるよ',
+    };
+    bus.emit('toast', msg[result.reason] ?? '潜れなかったよ');
+    return;
+  }
+  lastDive = null;
+  diveSetup = { zone: result.zone, plan: Dive.planDive(result.zone) };
+  closeSheet();
+  mode.set('dive');
+}
+
+/** 探索が終わったときに描画側から呼ばれる */
+export function finishDive(result: Dive.DiveResult) {
+  const reward = game.update((s) => Dive.finishDive(s, result));
+  lastDive = reward;
+  diveHud.update((hud) => ({
+    ...hud,
+    phase: 'result',
+    result: {
+      reachedBottom: result.reachedBottom,
+      maxDepth: result.maxDepth,
+      newBest: reward.newBest,
+      met: reward.metIds.map((id) => ({ id, name: Visitors.creatureName(id), isNew: reward.newIds.includes(id) })),
+      materials: Object.entries(result.materials)
+        .filter(([, n]) => n > 0)
+        .map(([id, count]) => ({ name: MATERIAL_BY_ID[id]?.name ?? id, count }))
+        .concat(result.trash ? [{ name: 'ゴミ（お礼）', count: result.trash }] : []),
+      materialPearls: reward.materialPearls,
+      trashPearls: reward.trashPearls,
+      bonus: reward.bonus,
+      halved: reward.halved,
+      pearls: reward.pearls,
+    },
+  }));
+}
+
+export function leaveDive() {
+  mode.set('home');
+  diveSetup = null;
+  if (lastDive) {
+    bus.emit('express', { expression: 'happy', ms: 1500 });
+    if (lastDive.newIds.length) bus.emit('toast', `図鑑に${lastDive.newIds.length}種が載ったよ！`);
+    celebrateLater(lastDive.stageUp, 600);
+  }
+  lastDive = null;
+}
+
+export const zoneName = (id: string) => ZONE_BY_ID[id]?.name ?? '';
 
 // ---------- 模様替え ----------
 

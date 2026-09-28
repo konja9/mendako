@@ -1,6 +1,7 @@
 <script lang="ts">
   import { sheet } from '../app/ui-state';
   import DecorSheet from './sheets/DecorSheet.svelte';
+  import DiveSelectSheet from './sheets/DiveSelectSheet.svelte';
   import DressSheet from './sheets/DressSheet.svelte';
   import FoodSheet from './sheets/FoodSheet.svelte';
   import SettingsSheet from './sheets/SettingsSheet.svelte';
@@ -17,4 +18,6 @@
   <DecorSheet />
 {:else if $sheet === 'zukan'}
   <ZukanSheet />
+{:else if $sheet === 'dive'}
+  <DiveSelectSheet />
 {/if}

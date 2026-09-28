@@ -20,6 +20,9 @@ export interface GameEvents {
   /** ごはんを落とす演出。終わったら done を呼ぶ */
   feed: { foodId: FoodId; done: () => void };
   celebrate: StageInfo;
+  /** 探索：ライトの切り替え・浮上する */
+  diveLight: boolean;
+  diveSurface: void;
 }
 
 type Handler<T> = (payload: T) => void;

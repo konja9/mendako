@@ -3,8 +3,8 @@
 import { writable } from 'svelte/store';
 import type { ScreenPoint } from './events';
 
-export type Mode = 'home' | 'catch';
-export type SheetKind = 'food' | 'dress' | 'settings' | 'decor' | 'zukan';
+export type Mode = 'home' | 'catch' | 'dive';
+export type SheetKind = 'food' | 'dress' | 'settings' | 'decor' | 'zukan' | 'dive';
 
 export const mode = writable<Mode>('home');
 export const sheet = writable<SheetKind | null>(null);
@@ -27,6 +27,43 @@ export interface CatchHud {
 }
 
 export const catchHud = writable<CatchHud>({ phase: 'intro', count: '3', time: 30, score: 0, pearls: 0, result: null });
+
+export interface DiveHud {
+  phase: 'intro' | 'play' | 'result';
+  zoneId: string;
+  depth: number;
+  /** 探検ゲージ（0〜100） */
+  gauge: number;
+  light: boolean;
+  met: number;
+  items: number;
+  /** 直前に出会った生き物の名前（「であえた！」の表示用） */
+  lastMet: { name: string; at: number } | null;
+  result: {
+    reachedBottom: boolean;
+    maxDepth: number;
+    newBest: boolean;
+    met: { id: string; name: string; isNew: boolean }[];
+    materials: { name: string; count: number }[];
+    materialPearls: number;
+    trashPearls: number;
+    bonus: number;
+    halved: boolean;
+    pearls: number;
+  } | null;
+}
+
+export const diveHud = writable<DiveHud>({
+  phase: 'intro',
+  zoneId: 'meso',
+  depth: 0,
+  gauge: 100,
+  light: true,
+  met: 0,
+  items: 0,
+  lastMet: null,
+  result: null,
+});
 
 /** 描画側が提供する「めんだこの頭の位置（画面座標）」。ふきだしの位置合わせに使う */
 export const worldLink: {

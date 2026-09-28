@@ -10,6 +10,7 @@
   const actions: Action[] = [
     { id: 'food', label: 'ごはん', icon: 'food', tone: 'var(--coral)', needsAwake: true, run: () => openSheet('food') },
     { id: 'play', label: 'あそぶ', icon: 'play', tone: 'var(--mint)', needsAwake: true, run: startPlay },
+    { id: 'dive', label: 'もぐる', icon: 'dive', tone: 'var(--glow)', needsAwake: true, run: () => openSheet('dive') },
     { id: 'dress', label: 'きせかえ', icon: 'dress', tone: 'var(--lilac)', needsAwake: false, run: () => openSheet('dress') },
     { id: 'decor', label: 'もようがえ', icon: 'decor', tone: 'var(--anemone)', needsAwake: false, run: () => openSheet('decor') },
   ];
@@ -42,7 +43,7 @@
 <style>
   .actions {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 4px;
     pointer-events: auto;
   }

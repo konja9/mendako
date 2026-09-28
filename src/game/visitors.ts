@@ -162,8 +162,7 @@ export function meetVisitor(state: GameState, uid: string, now = Date.now()) {
 
 export const creatureName = (id: string) => CREATURE_BY_ID[id]?.name ?? '生き物';
 
-/** 図鑑の発見数。探索でしか会えない生き物（Phase 3）はまだ数えない */
+/** 図鑑の発見数（めんだこ・来訪・探索のすべて） */
 export function zukanProgress(state: GameState) {
-  const listed = CREATURES.filter((c) => c.meet !== 'dive');
-  return { found: listed.filter((c) => state.zukan[c.id]).length, total: listed.length };
+  return { found: CREATURES.filter((c) => state.zukan[c.id]).length, total: CREATURES.length };
 }

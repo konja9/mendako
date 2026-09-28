@@ -3,9 +3,11 @@
 
 import { Application, Container, Graphics } from 'pixi.js';
 import { get } from 'svelte/store';
-import { finishCatch, game, meetVisitor, moveDecor, petMendako } from '../app/actions';
+import { diveSetup, finishCatch, finishDive, game, meetVisitor, moveDecor, petMendako } from '../app/actions';
+import { CREATURE_BY_ID } from '../game/data/creatures';
+import { DiveScene } from './dive/DiveScene';
 import { bus, type ScreenPoint } from '../app/events';
-import { bottomInset, catchHud, decorSelected, mode, sheet, tryOn, worldLink } from '../app/ui-state';
+import { bottomInset, catchHud, decorSelected, diveHud, mode, sheet, tryOn, worldLink } from '../app/ui-state';
 import { ITEM_BY_ID } from '../game/data/outfits';
 import { CatchScene } from './catch/CatchScene';
 import { Backdrop } from './tank/Backdrop';
@@ -33,6 +35,7 @@ export class World {
   private tank!: TankScene;
   private readonly dim = new Graphics();
   private catchScene: CatchScene | null = null;
+  private diveScene: DiveScene | null = null;
   private textureResolution = 2;
 
   private layout = { w: 0, h: 0, left: 0, scale: 1, floorY: 0 };
@@ -93,7 +96,14 @@ export class World {
     });
     decorSelected.subscribe((uid) => this.tank.decor.setSelected(uid));
     bottomInset.subscribe(() => this.updatePanTarget());
-    mode.subscribe((m) => (m === 'catch' ? this.startCatch() : this.endCatch()));
+    mode.subscribe((m) => {
+      if (m === 'catch') this.startCatch();
+      else this.endCatch();
+      if (m === 'dive') this.startDive();
+      else this.endDive();
+    });
+    bus.on('diveLight', (on) => this.diveScene?.setLight(on));
+    bus.on('diveSurface', () => this.diveScene?.surface());
 
     const head = () => this.tank.headGlobal();
     const local = (p: ScreenPoint) => this.tank.toLocal(p);
@@ -146,6 +156,7 @@ export class World {
     this.tank.drawFloor(-left / scale - 20, (w - left) / scale + 20, (h - floorY) / scale + 60);
     this.dim.clear().rect(0, 0, w, h).fill(0x020614);
     this.catchScene?.resize(w, h);
+    this.diveScene?.resize(w, h);
     this.updatePanTarget();
   }
 
@@ -166,6 +177,34 @@ export class World {
     this.app.stage.addChild(this.catchScene);
   }
 
+  private startDive() {
+    if (this.diveScene || !this.tank || !diveSetup) return;
+    this.pan.visible = false;
+    this.dim.visible = false;
+    this.diveScene = new DiveScene(
+      this.textureResolution / 1.4,
+      game.get().equipped,
+      diveSetup.zone,
+      diveSetup.plan,
+      {
+        hud: (patch) => diveHud.update((hud) => ({ ...hud, ...patch })),
+        meet: (id) => diveHud.update((hud) => ({ ...hud, lastMet: { name: CREATURE_BY_ID[id].name, at: Date.now() } })),
+        finish: finishDive,
+      },
+      this.options.reducedMotion,
+    );
+    this.diveScene.resize(this.layout.w, this.layout.h);
+    this.app.stage.addChild(this.diveScene);
+  }
+
+  private endDive() {
+    if (!this.diveScene) return;
+    this.diveScene.destroy();
+    this.diveScene = null;
+    this.pan.visible = true;
+    this.dim.visible = true;
+  }
+
   private endCatch() {
     if (!this.catchScene) return;
     this.catchScene.destroy();
@@ -177,6 +216,10 @@ export class World {
   private update(dt: number) {
     this.backdrop.update(dt);
     this.ocean.update(dt);
+    if (this.diveScene) {
+      this.diveScene.update(dt);
+      return;
+    }
     if (this.catchScene) {
       this.catchScene.update(dt);
       return;

@@ -25,8 +25,10 @@ export interface CreatureDef {
   motion: 'swim' | 'crawl' | 'sit';
   /** 泳ぐ生き物が好む高さ（upper: 上層 / middle: 中層） */
   layer?: 'upper' | 'middle';
-  /** 水槽での表示の横幅（論理座標） */
+  /** 水槽での表示の横幅（論理座標）。探索では、この幅で表示する */
   displayW: number;
+  /** 探索での出会い方。normal: 光の輪に入れる / shy: 速く近づくと逃げる / glow: ライトを消すと見える */
+  encounter?: 'normal' | 'shy' | 'glow';
 }
 
 export const CREATURES: CreatureDef[] = [
@@ -58,6 +60,7 @@ export const CREATURES: CreatureDef[] = [
     motion: 'swim',
     layer: 'upper',
     displayW: 54,
+    encounter: 'glow',
   },
   {
     id: 'hadakaiwashi',
@@ -73,6 +76,7 @@ export const CREATURES: CreatureDef[] = [
     motion: 'swim',
     layer: 'upper',
     displayW: 64,
+    encounter: 'glow',
   },
   {
     id: 'demenigisu',
@@ -88,6 +92,7 @@ export const CREATURES: CreatureDef[] = [
     motion: 'swim',
     layer: 'middle',
     displayW: 70,
+    encounter: 'shy',
   },
   {
     id: 'chochin',
@@ -103,6 +108,7 @@ export const CREATURES: CreatureDef[] = [
     motion: 'swim',
     layer: 'middle',
     displayW: 80,
+    encounter: 'glow',
   },
   {
     id: 'daiogusoku',
@@ -177,7 +183,114 @@ export const CREATURES: CreatureDef[] = [
     motion: 'crawl',
     displayW: 62,
   },
+  // ---- ここから深海探索でしか会えない生き物（Phase 3） ----
+  {
+    id: 'koumori',
+    name: 'コウモリダコ',
+    sci: 'Vampyroteuthis infernalis',
+    depth: [600, 900],
+    size: '体長 約30cm',
+    text: '酸素がとても少ない層でも生きられる。2本の長い糸でマリンスノーを集めて食べる。タコでもイカでもない仲間。',
+    hint: '中深層で、そっと近づくと会えるかも',
+    meet: 'dive',
+    likes: [],
+    rarity: 2,
+    motion: 'swim',
+    displayW: 84,
+    encounter: 'shy',
+  },
+  {
+    id: 'ryugu',
+    name: 'リュウグウノツカイ',
+    sci: 'Regalecus russelii',
+    depth: [200, 1000],
+    size: '全長 約3m（最大 約8m）',
+    text: '世界でいちばん長い硬骨魚。銀色の細長い体に赤い背びれ。頭を上にして、立ったような姿で漂う。',
+    hint: '中深層を漂っているらしい',
+    meet: 'dive',
+    likes: [],
+    rarity: 3,
+    motion: 'swim',
+    displayW: 70,
+    encounter: 'normal',
+  },
+  {
+    id: 'kairou',
+    name: 'カイロウドウケツ',
+    sci: 'Euplectella aspergillum',
+    depth: [100, 1000],
+    size: '高さ 約20〜30cm',
+    text: 'ガラスと同じ成分の骨格を持つ海綿。中にドウケツエビのつがいがすみ、一生そこで暮らすことから「偕老同穴」と名付けられた。',
+    hint: '中深層の海底に立っている',
+    meet: 'dive',
+    likes: [],
+    rarity: 2,
+    motion: 'sit',
+    displayW: 52,
+    encounter: 'normal',
+  },
+  {
+    id: 'fukurou',
+    name: 'フクロウナギ',
+    sci: 'Eurypharynx pelecanoides',
+    depth: [500, 3000],
+    size: '全長 約80cm〜1m',
+    text: '体に対してとても大きな口を持ち、自分より大きな獲物ものみこめる。尾の先の発光器で獲物をおびき寄せる。',
+    hint: '漸深層の暗いところで、光っているらしい',
+    meet: 'dive',
+    likes: [],
+    rarity: 2,
+    motion: 'swim',
+    displayW: 96,
+    encounter: 'glow',
+  },
+  {
+    id: 'atolla',
+    name: 'ムラサキカムリクラゲ',
+    sci: 'Atolla wyvillei',
+    depth: [1000, 4000],
+    size: '直径 約30cm',
+    text: '襲われると傘を輪のように光らせる。「防犯ベル」のように、襲った相手を食べる大きな生き物を呼ぶといわれる。',
+    hint: 'ライトを消すと、光って見えるかも',
+    meet: 'dive',
+    likes: [],
+    rarity: 2,
+    motion: 'swim',
+    displayW: 70,
+    encounter: 'glow',
+  },
+  {
+    id: 'mitsukuri',
+    name: 'ミツクリザメ',
+    sci: 'Mitsukurina owstoni',
+    depth: [30, 1300],
+    size: '全長 3〜4m（最大 約6m）',
+    text: '長くとがった鼻先を持つ深海ザメ。獲物をとるときは、あごを勢いよく前に飛び出させる。',
+    hint: '急いで近づくと逃げてしまう大きな影',
+    meet: 'dive',
+    likes: [],
+    rarity: 3,
+    motion: 'swim',
+    displayW: 130,
+    encounter: 'shy',
+  },
+  {
+    id: 'jumonji',
+    name: 'ジュウモンジダコ',
+    sci: 'Grimpoteuthis sp.',
+    depth: [3000, 7000],
+    size: '約20〜30cm（1mを超えるものも）',
+    text: '頭の横の大きなヒレで羽ばたくように泳ぐ。ダンボに似ていることから英語で「ダンボ・オクトパス」と呼ばれる。めんだこの親戚。',
+    hint: '漸深層のいちばん深いところにいるらしい',
+    meet: 'dive',
+    likes: [],
+    rarity: 2,
+    motion: 'swim',
+    displayW: 80,
+    encounter: 'normal',
+  },
 ];
 
 export const CREATURE_BY_ID: Record<string, CreatureDef> = Object.fromEntries(CREATURES.map((c) => [c.id, c]));
 export const VISITORS = CREATURES.filter((c) => c.meet === 'visit');
+export const DIVERS = CREATURES.filter((c) => c.meet === 'dive');

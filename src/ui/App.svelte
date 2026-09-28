@@ -4,6 +4,7 @@
   import Bubble from './Bubble.svelte';
   import CatchOverlay from './CatchOverlay.svelte';
   import Celebrate from './Celebrate.svelte';
+  import DiveOverlay from './DiveOverlay.svelte';
   import Hud from './Hud.svelte';
   import SheetHost from './SheetHost.svelte';
   import Status from './Status.svelte';
@@ -26,6 +27,8 @@
 <Celebrate />
 {#if $mode === 'catch'}
   <CatchOverlay />
+{:else if $mode === 'dive'}
+  <DiveOverlay />
 {/if}
 
 <style>

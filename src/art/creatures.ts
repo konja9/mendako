@@ -125,4 +125,81 @@ export const CREATURE_ART: Record<string, CreatureArt> = {
      <g stroke="#c8baa8" stroke-width="1.6" stroke-linecap="round"><path d="M32 46L30 52M36 48L35 55M41 49L40 56M46 50L46 57M51 50L52 57M56 50L57 57M61 49L63 56M66 48L68 54M71 46L73 52"/></g>
      ${eye(30, 28, 3)}`,
   ),
+  koumori: art(
+    96,
+    92,
+    `<path d="M22 22L10 10L20 30Z M74 22L86 10L76 30Z" fill="#b24a5c" stroke="#4a1624" stroke-width="2" stroke-linejoin="round"/>
+     <path d="M48 6C70 6 80 26 78 44L18 44C16 26 26 6 48 6Z" fill="#9a3346" stroke="#4a1624" stroke-width="2.5" stroke-linejoin="round"/>
+     <path d="M14 42C10 58 12 74 6 86C18 80 24 72 30 84C36 74 42 78 48 88C54 78 60 74 66 84C72 72 78 80 90 86C84 74 86 58 82 42Z" fill="#6f1f33" stroke="#4a1624" stroke-width="2.5" stroke-linejoin="round"/>
+     <g stroke="#e8a0b0" stroke-width="1.6" stroke-linecap="round"><path d="M24 56L22 64M36 60L35 68M48 62V70M60 60L61 68M72 56L74 64"/></g>
+     <circle cx="36" cy="32" r="8" fill="#4ad0ff"/><circle cx="60" cy="32" r="8" fill="#4ad0ff"/>
+     ${eye(36, 32, 5)}${eye(60, 32, 5)}
+     <path d="M42 42Q48 46 54 42" stroke="#4a1624" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  ),
+  ryugu: art(
+    56,
+    170,
+    `<path d="M20 20C14 8 18 0 24 4C22 -4 34 -2 30 8C38 2 42 12 32 18" fill="#ff5f6d" stroke="#8a1f2a" stroke-width="2" stroke-linejoin="round"/>
+     <path d="M30 22C34 60 34 110 26 166" stroke="#ff7080" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="4 5"/>
+     <path d="M26 18C38 22 40 40 38 70C36 110 32 140 26 168C20 140 16 110 16 70C14 40 16 22 26 18Z" fill="#dfe8f4" stroke="#5a6a86" stroke-width="2.4" stroke-linejoin="round"/>
+     <path d="M22 40C22 80 22 120 24 150" stroke="#b8c8dc" stroke-width="2" fill="none"/>
+     ${eye(26, 30, 3.6)}
+     <path d="M20 36Q23 38 26 36" stroke="#5a6a86" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+  ),
+  kairou: art(
+    54,
+    104,
+    `<path d="M14 100C12 70 8 40 12 18C18 6 36 6 42 18C46 40 42 70 40 100Z" fill="#eef6ff" fill-opacity=".55" stroke="#8fb2d6" stroke-width="2.4" stroke-linejoin="round"/>
+     <g stroke="#b8d2ec" stroke-width="1.4" fill="none">
+       <path d="M12 28H42M10 42H44M10 56H44M11 70H43M12 84H42"/>
+       <path d="M18 12L20 100M27 8V100M36 12L34 100"/>
+       <path d="M12 30L42 58M12 58L42 86M42 30L12 58M42 58L12 86"/>
+     </g>
+     <path d="M12 18C18 10 36 10 42 18" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+     <g fill="#ffb3a0" stroke="#b86a5a" stroke-width="1.2"><ellipse cx="24" cy="60" rx="4" ry="2.4"/><ellipse cx="31" cy="66" rx="4" ry="2.4"/></g>`,
+  ),
+  fukurou: art(
+    130,
+    64,
+    `<path d="M40 32C60 28 80 40 100 34C112 30 120 36 126 30" stroke="#3a3048" stroke-width="7" fill="none" stroke-linecap="round"/>
+     <path d="M40 32C60 28 80 40 100 34C112 30 120 36 126 30" stroke="#6a5a80" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+     <circle cx="126" cy="30" r="9" fill="#ff9ad0" opacity=".35"/><circle cx="126" cy="30" r="3.5" fill="#ffb3e0"/>
+     <path d="M4 20C10 6 36 4 46 22C50 30 48 40 44 44C34 58 10 58 4 44Z" fill="#5a4a72" stroke="#2a2140" stroke-width="2.5" stroke-linejoin="round"/>
+     <path d="M6 30C18 26 36 28 46 32C36 40 18 42 6 38Z" fill="#2a2140"/>
+     <path d="M10 44C18 50 32 50 40 44" stroke="#8a78a8" stroke-width="2" fill="none" stroke-linecap="round"/>
+     ${eye(18, 18, 2.6)}`,
+  ),
+  atolla: art(
+    84,
+    66,
+    `<path d="M8 34C8 16 24 6 42 6C60 6 76 16 76 34C66 40 18 40 8 34Z" fill="#b2283e" stroke="#5a1020" stroke-width="2.5" stroke-linejoin="round"/>
+     <ellipse cx="42" cy="22" rx="14" ry="8" fill="#e05068"/>
+     <g fill="#8fe3ff"><circle cx="14" cy="34" r="2.4"/><circle cx="24" cy="37" r="2.4"/><circle cx="34" cy="38" r="2.4"/><circle cx="44" cy="38" r="2.4"/><circle cx="54" cy="37" r="2.4"/><circle cx="64" cy="35" r="2.4"/><circle cx="72" cy="33" r="2.4"/></g>
+     <g stroke="#c24a5e" stroke-width="2" fill="none" stroke-linecap="round"><path d="M14 38C12 48 18 54 14 64M28 40C28 50 32 56 30 64M42 40V62M56 40C56 50 52 56 54 64M70 38C72 48 66 54 70 64"/></g>
+     <path d="M52 44C60 52 62 60 58 66" stroke="#e05068" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+  ),
+  mitsukuri: art(
+    150,
+    64,
+    `<path d="M104 30L128 12L124 34L144 48L118 40Z" fill="#e8a8b4" stroke="#7a3a48" stroke-width="2.2" stroke-linejoin="round"/>
+     <path d="M70 18L80 4L88 22Z" fill="#e8a8b4" stroke="#7a3a48" stroke-width="2.2" stroke-linejoin="round"/>
+     <path d="M2 24L40 22C60 14 94 16 110 30C94 46 60 48 40 40C30 40 22 36 18 34Z" fill="#f2bcc6" stroke="#7a3a48" stroke-width="2.5" stroke-linejoin="round"/>
+     <path d="M2 24L40 22" stroke="#7a3a48" stroke-width="2.5" stroke-linecap="round"/>
+     <path d="M22 36C28 48 44 50 50 42L40 38Z" fill="#c86a7c" stroke="#7a3a48" stroke-width="2" stroke-linejoin="round"/>
+     <path d="M26 40L28 44M32 42L34 46M38 42L40 46" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+     <path d="M54 32L56 38M60 31L62 37M66 31L68 37" stroke="#c88a96" stroke-width="1.6" stroke-linecap="round"/>
+     ${eye(40, 28, 2.8)}`,
+  ),
+  jumonji: art(
+    96,
+    92,
+    `<ellipse cx="14" cy="34" rx="14" ry="10" transform="rotate(-20 14 34)" fill="#ffd0c0" stroke="#8a4a4a" stroke-width="2.5"/>
+     <ellipse cx="82" cy="34" rx="14" ry="10" transform="rotate(20 82 34)" fill="#ffd0c0" stroke="#8a4a4a" stroke-width="2.5"/>
+     <path d="M48 8C68 8 78 24 78 44C84 58 86 72 80 82C72 76 66 84 58 80C54 86 42 86 38 80C30 84 24 76 16 82C10 72 12 58 18 44C18 24 28 8 48 8Z" fill="#ffe6dc" stroke="#8a4a4a" stroke-width="2.5" stroke-linejoin="round"/>
+     <path d="M20 56C36 64 60 64 76 56" stroke="#f5c2b2" stroke-width="3" fill="none" stroke-linecap="round"/>
+     <ellipse cx="34" cy="20" rx="8" ry="4.5" transform="rotate(-30 34 20)" fill="#fff" opacity=".6"/>
+     ${eye(38, 40, 5)}${eye(58, 40, 5)}
+     <ellipse cx="28" cy="50" rx="5" ry="3" fill="#ff8aa6" opacity=".5"/><ellipse cx="68" cy="50" rx="5" ry="3" fill="#ff8aa6" opacity=".5"/>
+     <path d="M44 50Q48 54 52 50" stroke="#8a4a4a" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+  ),
 };

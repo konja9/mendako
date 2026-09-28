@@ -5,7 +5,7 @@ import type { FoodId } from '../game/data/care';
 const ui = (body: string, extra = '') =>
   `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${extra}>${body}</svg>`;
 
-export type IconName = 'food' | 'pet' | 'play' | 'dress' | 'moon' | 'sun' | 'menu' | 'close' | 'decor' | 'book' | 'flip' | 'store' | 'check' | 'back';
+export type IconName = 'food' | 'pet' | 'play' | 'dress' | 'moon' | 'sun' | 'menu' | 'close' | 'decor' | 'book' | 'flip' | 'store' | 'check' | 'back' | 'dive' | 'light' | 'up';
 
 export const ICONS: Record<IconName, string> = {
   food: ui(
@@ -32,6 +32,10 @@ export const ICONS: Record<IconName, string> = {
   store: ui('<path d="M4 9H20L18.5 20H5.5Z" fill="currentColor" fill-opacity=".18"/><path d="M9 9V6A3 3 0 0 1 15 6V9"/>'),
   check: ui('<path d="M5 12.5L10 17L19 7"/>'),
   back: ui('<path d="M15 5L8 12L15 19"/>'),
+  // もぐる：下向きの矢印と泡
+  dive: ui('<path d="M12 4V17M6.5 11.5L12 17L17.5 11.5"/><circle cx="18" cy="5" r="1.6" fill="currentColor"/><circle cx="6" cy="6.5" r="1.1" fill="currentColor"/><path d="M5 20.5H19"/>'),
+  light: ui('<path d="M9 18H15M10 21H14"/><path d="M12 3A6 6 0 0 0 8 13.5C9 14.5 9 16 9 16H15S15 14.5 16 13.5A6 6 0 0 0 12 3Z" fill="currentColor" fill-opacity=".18"/>'),
+  up: ui('<path d="M12 20V7M6.5 12.5L12 7L17.5 12.5"/><path d="M5 3.5H19"/>'),
   close: ui('<path d="M6 6L18 18M18 6L6 18"/>'),
 };
 

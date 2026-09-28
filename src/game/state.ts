@@ -66,6 +66,8 @@ export interface GameState {
   zukan: Record<string, ZukanEntry>;
   /** 飾りや来訪者に付ける通し番号 */
   nextUid: number;
+  /** 深海探索の記録 */
+  dive: { bestDepth: number; dives: number };
 }
 
 export function createState(now = Date.now()): GameState {
@@ -97,6 +99,7 @@ export function createState(now = Date.now()): GameState {
     lastVisitRoll: now,
     zukan: { mendako: { count: 1, firstAt: now } },
     nextUid: 3,
+    dive: { bestDepth: 0, dives: 0 },
   };
 }
 
@@ -196,6 +199,12 @@ export function normalizeState(input: unknown, now = Date.now()): GameState {
     state.zukan[id] = { count: Math.max(1, Math.floor(num(entry.count, 1))), firstAt: num(entry.firstAt, now) };
   }
   if (!state.zukan.mendako) state.zukan.mendako = { count: 1, firstAt: state.bornAt };
+
+  const dive = obj(saved.dive);
+  if (dive) {
+    state.dive.bestDepth = Math.max(0, Math.round(num(dive.bestDepth, 0)));
+    state.dive.dives = Math.max(0, Math.floor(num(dive.dives, 0)));
+  }
 
   // 通し番号は、使われている番号より大きくしておく
   const maxUid = Math.max(
