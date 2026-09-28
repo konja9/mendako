@@ -93,3 +93,28 @@ describe('保存データ（模様替え）', () => {
     expect(s.nextUid).toBeGreaterThan(7);
   });
 });
+
+describe('浮かべる飾り', () => {
+  test('上のほう（-520 まで）に置ける。新しい浮かべる飾りも買って置ける', () => {
+    const s = createState(T0);
+    s.pearls = 500;
+    for (const id of ['glass-float', 'driftwood', 'siphonophore', 'plankton']) {
+      expect(buyDecor(s, id).ok).toBe(true);
+      const r = placeDecor(s, id, { x: 200, y: -600 });
+      expect(r.ok).toBe(true);
+      const placed = s.decor.placed.find((p) => r.ok && p.uid === r.uid)!;
+      expect(placed.y).toBe(PLACE_BOUNDS.floatY[0]);
+      expect(PLACE_BOUNDS.floatY[0]).toBe(-520);
+    }
+  });
+
+  test('位置を省くと、浮かべる飾りは中層〜上層に置かれる', () => {
+    const s = createState(T0);
+    s.decor.owned.plankton = 5;
+    for (let i = 0; i < 5; i++) {
+      const r = placeDecor(s, 'plankton');
+      const placed = s.decor.placed.find((p) => r.ok && p.uid === r.uid)!;
+      expect(placed.y).toBeLessThanOrEqual(-250);
+    }
+  });
+});

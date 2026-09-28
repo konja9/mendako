@@ -23,6 +23,8 @@ export interface CreatureDef {
   rarity: 1 | 2 | 3;
   /** 水槽での動き方 */
   motion: 'swim' | 'crawl' | 'sit';
+  /** 泳ぐ生き物が好む高さ（upper: 上層 / middle: 中層） */
+  layer?: 'upper' | 'middle';
   /** 水槽での表示の横幅（論理座標） */
   displayW: number;
 }
@@ -54,6 +56,7 @@ export const CREATURES: CreatureDef[] = [
     likes: ['light'],
     rarity: 1,
     motion: 'swim',
+    layer: 'upper',
     displayW: 54,
   },
   {
@@ -68,6 +71,7 @@ export const CREATURES: CreatureDef[] = [
     likes: ['light', 'coral'],
     rarity: 1,
     motion: 'swim',
+    layer: 'upper',
     displayW: 64,
   },
   {
@@ -82,6 +86,7 @@ export const CREATURES: CreatureDef[] = [
     likes: ['coral'],
     rarity: 2,
     motion: 'swim',
+    layer: 'middle',
     displayW: 70,
   },
   {
@@ -96,6 +101,7 @@ export const CREATURES: CreatureDef[] = [
     likes: ['light', 'hide'],
     rarity: 3,
     motion: 'swim',
+    layer: 'middle',
     displayW: 80,
   },
   {

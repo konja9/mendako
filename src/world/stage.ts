@@ -21,6 +21,8 @@ export interface WorldOptions {
   reducedMotion: boolean;
   /** 海底の線の画面上の y（下のボタンの少し上）。DOM を測って返す */
   measureFloor: () => number;
+  /** 水槽として使える一番上の y（ステータス欄の下） */
+  measureTop: () => number;
 }
 
 export class World {
@@ -140,6 +142,7 @@ export class World {
     this.ocean.resize(w, h);
     this.pan.scale.set(scale);
     this.pan.x = left;
+    this.tank.setWater((floorY - this.options.measureTop()) / scale);
     this.tank.drawFloor(-left / scale - 20, (w - left) / scale + 20, (h - floorY) / scale + 60);
     this.dim.clear().rect(0, 0, w, h).fill(0x020614);
     this.catchScene?.resize(w, h);

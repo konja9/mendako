@@ -40,6 +40,10 @@ export const DECOR: DecorDef[] = [
   { id: 'chest', name: '宝箱', note: 'ふたが少し開いている', price: 45, place: 'floor', tags: ['hide'], w: 80, h: 64 },
   { id: 'lantern-lamp', name: 'ちょうちんライト', note: 'やさしい光で照らす', price: 40, place: 'float', tags: ['light'], w: 44, h: 64 },
   { id: 'jelly-mobile', name: 'クラゲのモビール', note: 'ゆらゆら光る', price: 30, place: 'float', tags: ['light'], w: 60, h: 84 },
+  { id: 'glass-float', name: '浮き玉', note: '網からはぐれたガラスの浮き', price: 20, place: 'float', tags: ['hide'], w: 50, h: 58 },
+  { id: 'driftwood', name: '漂う流木', note: '水の中をゆっくり漂う', price: 25, place: 'float', tags: ['hide', 'rock'], w: 110, h: 40 },
+  { id: 'siphonophore', name: 'クダクラゲのリボン', note: '長くたなびいて光る', price: 45, place: 'float', tags: ['light', 'coral'], w: 36, h: 130 },
+  { id: 'plankton', name: '光るプランクトン', note: '小さな光の群れ', price: 35, place: 'float', tags: ['light'], w: 90, h: 70 },
 ];
 
 export const DECOR_BY_ID: Record<string, DecorDef> = Object.fromEntries(DECOR.map((d) => [d.id, d]));
@@ -70,7 +74,7 @@ export const MAX_PLACED = 12;
 export const PLACE_BOUNDS = {
   x: [24, 376] as const,
   floorY: [-44, 4] as const,
-  floatY: [-300, -90] as const,
+  floatY: [-520, -90] as const,
 };
 
 /** 置き場所の種類に合わせて、水槽の中に収まる位置に直す */

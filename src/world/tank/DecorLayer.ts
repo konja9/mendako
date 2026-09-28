@@ -34,6 +34,8 @@ export class DecorLayer extends Container {
   private bubbleTimer = 0;
   private time = 0;
   editing = false;
+  /** 画面が低いとき、浮かべる飾りの高さを縮める倍率（1 = そのまま） */
+  vScale = 1;
 
   constructor(
     private resolution: number,
@@ -124,7 +126,7 @@ export class DecorLayer extends Container {
     e.stopPropagation();
     const item = this.items.get(uid)!;
     const local = this.toLocal(e.global);
-    this.drag = { uid, dx: local.x - item.base.x, dy: local.y - item.base.y, lift: 0 };
+    this.drag = { uid, dx: local.x - item.base.x, dy: local.y - this.displayY(item), lift: 0 };
     if (e.pointerType === 'touch') this.drag.lift = TOUCH_LIFT;
     this.cb.select(uid);
   }
@@ -134,7 +136,8 @@ export class DecorLayer extends Container {
     const item = this.items.get(this.drag.uid);
     if (!item) return;
     const local = this.toLocal(e.global);
-    item.base = clampPlacement(item.def, local.x - this.drag.dx, local.y - this.drag.dy - this.drag.lift);
+    const y = local.y - this.drag.dy - this.drag.lift;
+    item.base = clampPlacement(item.def, local.x - this.drag.dx, item.def.place === 'float' ? y / this.vScale : y);
   };
 
   private onUp = () => {
@@ -144,14 +147,23 @@ export class DecorLayer extends Container {
     this.drag = null;
   };
 
+  private displayY(item: Item) {
+    return item.def.place === 'float' ? item.base.y * this.vScale : item.base.y;
+  }
+
+  /** 浮かべた飾りの表示位置（めんだこの行き先えらびで避けるため） */
+  floatPositions() {
+    return [...this.items.values()].filter((i) => i.def.place === 'float').map((i) => ({ x: i.base.x, y: this.displayY(i) }));
+  }
+
   update(dt: number) {
     this.time += dt;
     const t = this.time;
     this.outline.clear();
     for (const [uid, item] of this.items) {
       const { sprite, def, base } = item;
-      let x = base.x;
-      let y = base.y;
+      const x = base.x;
+      let y = this.displayY(item);
       let rotation = 0;
       // 浮かべる飾りはゆらゆら、ウミエラやウミユリはそよそよ
       if (def.place === 'float') {

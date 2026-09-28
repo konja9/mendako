@@ -43,9 +43,33 @@ function pick<T extends { weight: number }>(list: T[], rng: Rng): T | null {
 }
 
 /** 生き物の動き方に合わせた、水槽の中の居場所 */
+/** 泳ぐ生き物の高さの範囲（論理座標）。上層は画面が低いと描画側で縮める */
+export const LAYER_Y = { upper: [-500, -330], middle: [-300, -160] } as const;
+
+/** 泳ぐ生き物の居場所：好む層の中で、ほかの来訪者や浮かべた飾りから離れた場所を選ぶ */
+function swimPosition(state: GameState, def: CreatureDef, rng: Rng) {
+  const [top, bottom] = LAYER_Y[def.layer ?? 'middle'];
+  const others = [
+    ...state.visitors.map((v) => ({ x: v.x, y: v.y })),
+    ...state.decor.placed.filter((p) => DECOR_BY_ID[p.id]?.place === 'float').map((p) => ({ x: p.x, y: p.y })),
+  ];
+  let best = { x: 200, y: (top + bottom) / 2 };
+  let bestGap = -1;
+  for (let i = 0; i < 6; i++) {
+    const p = { x: 60 + rng() * 280, y: bottom + rng() * (top - bottom) };
+    const gap = Math.min(Infinity, ...others.map((o) => Math.hypot(o.x - p.x, (o.y - p.y) * 1.5)));
+    if (gap > bestGap) {
+      best = p;
+      bestGap = gap;
+    }
+    if (gap > 110) break;
+  }
+  return best;
+}
+
 function spawnPosition(state: GameState, def: CreatureDef, rng: Rng): { x: number; y: number } {
   const x = 50 + rng() * 300;
-  if (def.motion === 'swim') return { x, y: -120 - rng() * 150 };
+  if (def.motion === 'swim') return swimPosition(state, def, rng);
   if (def.motion === 'sit') {
     // 好きな飾りにくっつく（オオグチボヤは岩、ホネクイハナムシは骨）
     const spots = state.decor.placed.filter((p) => DECOR_BY_ID[p.id]?.place === 'floor' && DECOR_BY_ID[p.id].tags.some((t) => def.likes.includes(t)));

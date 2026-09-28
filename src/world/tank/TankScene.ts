@@ -46,6 +46,8 @@ export class TankScene extends Container {
   private floorId = '';
   private floorExtent = { xMin: 0, xMax: TANK_W, bottom: 200 };
   private editing = false;
+  /** 海底の線から画面の上（ステータス欄の下）までの高さ（論理座標） */
+  private waterH = 540;
 
   /** きせかえ中など、真ん中でじっとしてほしいとき */
   focus = false;
@@ -123,6 +125,43 @@ export class TankScene extends Container {
     }
   }
 
+  /** 使える水の高さを受け取り、上の層の生き物・飾りが画面からはみ出ないよう縮める */
+  setWater(height: number) {
+    this.waterH = Math.max(240, height);
+    const vScale = Math.min(1, (this.waterH - 50) / 520);
+    this.decor.vScale = vScale;
+    this.visitors.vScale = vScale;
+  }
+
+  /**
+   * めんだこの次の行き先。海底でひと休み・中層・上層から選び、
+   * 来ている生き物や浮かべた飾りから離れた場所をえらぶ。
+   */
+  private pickWanderTarget(forceWater = false): { x: number; y: number; stay: number } {
+    // めんだこの頭〜リボンぶんの高さを空けておく
+    const top = -Math.max(200, this.waterH - 175);
+    const roll = forceWater ? 0.3 + Math.random() * 0.7 : Math.random();
+    const layer = roll < 0.3 ? 'floor' : roll < 0.7 ? 'middle' : 'upper';
+    const range: [number, number] =
+      layer === 'floor' ? [-16, 0] : layer === 'middle' ? [top * 0.6, -100] : [top, top * 0.72];
+    const others = [...this.visitors.positions(), ...this.decor.floatPositions()];
+    let best = { x: TANK_W / 2, y: range[1] };
+    let bestGap = -1;
+    for (let i = 0; i < 5; i++) {
+      const p = { x: 95 + Math.random() * (TANK_W - 190), y: range[0] + Math.random() * (range[1] - range[0]) };
+      // めんだこの体の中心（足もとの少し上）で比べる
+      const gap = Math.min(Infinity, ...others.map((o) => Math.hypot(o.x - p.x, o.y - (p.y - 70))));
+      if (gap > bestGap) {
+        best = p;
+        bestGap = gap;
+      }
+      if (gap > 120) break;
+    }
+    // 海底が生き物でいっぱいなら、休むのはやめて泳ぎに行く
+    if (layer === 'floor' && bestGap < 90) return this.pickWanderTarget(true);
+    return { ...best, stay: layer === 'floor' ? 7 + Math.random() * 5 : 4.5 + Math.random() * 4 };
+  }
+
   /** 模様替え中は飾りを動かせるようにし、めんだこと生き物は薄くして押せなくする */
   setEditing(on: boolean) {
     this.editing = on;
@@ -150,15 +189,16 @@ export class TankScene extends Container {
     } else if (this.focus) {
       this.target = { x: TANK_W / 2, y: -8 };
     } else if (this.nextWander <= 0 && !this.reducedMotion) {
-      this.nextWander = 4.2 + Math.random() * 4;
-      this.target = { x: 95 + Math.random() * (TANK_W - 190), y: -Math.random() * 60 - 4 };
+      const next = this.pickWanderTarget();
+      this.nextWander = next.stay;
+      this.target = { x: next.x, y: next.y };
     }
 
-    // なめらかに目標へ（約1.5秒で追いつく）
+    // なめらかに目標へ。上下の移動は横よりゆっくり、ふわっと
     const k = Math.min(1, dt * 1.6);
     const vx = (this.target.x - this.pos.x) * k;
     this.pos.x += vx;
-    this.pos.y += (this.target.y - this.pos.y) * k;
+    this.pos.y += (this.target.y - this.pos.y) * Math.min(1, dt * 0.9);
     this.tilt += (Math.max(-0.12, Math.min(0.12, vx * 0.05)) - this.tilt) * Math.min(1, dt * 4);
     this.scaleNow += (this.scaleTarget - this.scaleNow) * Math.min(1, dt * 3);
 
@@ -177,8 +217,8 @@ export class TankScene extends Container {
     // 影は海底に。浮いているほど小さく薄く
     const lift = -this.pos.y + (MENDAKO_FOOT.y - this.mendako.inner.position.y);
     this.shadow.position.set(this.pos.x, 10);
-    this.shadow.scale.set(this.scaleNow * Math.max(0.55, 1 - lift / 160));
-    this.shadow.alpha *= Math.max(0.3, 1 - lift / 120);
+    this.shadow.scale.set(this.scaleNow * Math.max(0.35, 1 - lift / 450));
+    this.shadow.alpha *= Math.max(0.12, 1 - lift / 320);
 
     this.zzz.visible = this.mendako.sleeping;
     if (this.zzz.visible) {

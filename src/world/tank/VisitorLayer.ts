@@ -23,6 +23,8 @@ export class VisitorLayer extends Container {
   private items = new Map<string, Item>();
   private textures = new Map<string, Promise<Texture>>();
   private time = 0;
+  /** 画面が低いとき、泳ぐ生き物の高さを縮める倍率 */
+  vScale = 1;
 
   constructor(
     private resolution: number,
@@ -94,6 +96,11 @@ export class VisitorLayer extends Container {
     for (const item of this.items.values()) item.root.eventMode = on ? 'static' : 'none';
   }
 
+  /** 今の表示位置（めんだこの行き先えらびで避けるため） */
+  positions() {
+    return [...this.items.values()].map((i) => ({ x: i.root.x, y: i.root.y }));
+  }
+
   update(dt: number) {
     this.time += dt;
     const t = this.time;
@@ -103,7 +110,7 @@ export class VisitorLayer extends Container {
       let y = base.y;
       if (def.motion === 'swim') {
         x = base.x + Math.sin(t * 0.22 + phase) * 44;
-        y = base.y + Math.sin(t * 0.9 + phase) * 6;
+        y = base.y * this.vScale + Math.sin(t * 0.9 + phase) * 6;
       } else if (def.motion === 'crawl') {
         x = base.x + Math.sin(t * 0.1 + phase) * 30;
         y = base.y;

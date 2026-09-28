@@ -22,8 +22,14 @@ const measureFloor = () => {
   return actions ? actions.getBoundingClientRect().top - 14 : window.innerHeight - 120;
 };
 
+const measureTop = () => {
+  const status = document.querySelector('.status');
+  return status ? status.getBoundingClientRect().bottom + 8 : 160;
+};
+
 const world = new World({
   host,
+  measureTop,
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   measureFloor,
 });

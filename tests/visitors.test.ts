@@ -119,3 +119,39 @@ describe('会う・図鑑', () => {
     expect(s.nextUid).toBeGreaterThan(5);
   });
 });
+
+describe('泳ぐ生き物の高さ', () => {
+  test('好む層の高さに出る（ホタルイカは上層、デメニギスは中層）', async () => {
+    const { LAYER_Y } = await import('../src/game/visitors');
+    const { CREATURE_BY_ID } = await import('../src/game/data/creatures');
+    for (let seed = 0; seed < 20; seed++) {
+      const s = createState(T0);
+      let n = seed;
+      const rng = () => ((n = (n * 9301 + 49297) % 233280) / 233280);
+      const r = callVisitor(s, T0, rng);
+      if (!r.ok) continue;
+      const def = CREATURE_BY_ID[r.visitor.id];
+      if (def.motion !== 'swim') continue;
+      const [top, bottom] = LAYER_Y[def.layer ?? 'middle'];
+      expect(r.visitor.y).toBeGreaterThanOrEqual(top);
+      expect(r.visitor.y).toBeLessThanOrEqual(bottom);
+    }
+    expect(CREATURE_BY_ID.hotaruika.layer).toBe('upper');
+    expect(CREATURE_BY_ID.demenigisu.layer).toBe('middle');
+  });
+
+  test('泳ぐ生き物どうしは離れた場所に出る', () => {
+    const s = createState(T0);
+    s.decor.owned['lantern-lamp'] = 1;
+    placeDecor(s, 'lantern-lamp');
+    let n = 7;
+    const rng = () => ((n = (n * 9301 + 49297) % 233280) / 233280);
+    for (let i = 0; i < 3; i++) callVisitor(s, T0, rng);
+    const swimmers = s.visitors.filter((v) => v.y < -100);
+    for (const a of swimmers) {
+      for (const b of swimmers) {
+        if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(40);
+      }
+    }
+  });
+});

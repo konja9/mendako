@@ -134,4 +134,46 @@ export const DECOR_ART: Record<string, string> = {
      </g>
      <g fill="#8fe3ff"><circle cx="14" cy="68" r="2.4"/><circle cx="24" cy="80" r="2.4"/><circle cx="36" cy="80" r="2.4"/><circle cx="46" cy="68" r="2.4"/></g>`,
   ),
+  'glass-float': svg(
+    50,
+    58,
+    `<path d="M25 2V10" stroke="#8fa6c8" stroke-width="2"/>
+     <circle cx="25" cy="33" r="21" fill="#7fd6c4" fill-opacity=".55" stroke="#2f7f74" stroke-width="2.4"/>
+     <path d="M6 30C14 26 36 26 44 30M8 42C16 38 34 38 42 42M25 12C19 22 19 44 25 54M25 12C31 22 31 44 25 54" stroke="#a88a5a" stroke-width="2" fill="none"/>
+     <ellipse cx="17" cy="23" rx="5" ry="3" transform="rotate(-30 17 23)" fill="#fff" opacity=".7"/>`,
+  ),
+  driftwood: svg(
+    110,
+    40,
+    `<path d="M6 22C8 12 26 10 50 12C72 10 96 8 104 16C108 24 100 30 84 28C64 32 36 32 18 30C8 30 4 28 6 22Z" fill="#8a6a4e" stroke="#3a2a1e" stroke-width="2.4" stroke-linejoin="round"/>
+     <path d="M20 20C40 18 60 20 88 18M30 25C50 24 70 25 90 23" stroke="#a8876a" stroke-width="2" fill="none" stroke-linecap="round"/>
+     <path d="M78 12L86 2M86 2L92 4" stroke="#3a2a1e" stroke-width="5" stroke-linecap="round"/>
+     <path d="M78 12L86 2M86 2L92 4" stroke="#8a6a4e" stroke-width="2.6" stroke-linecap="round"/>
+     <circle cx="100" cy="21" r="3.4" fill="#5c4533"/>`,
+  ),
+  siphonophore: svg(
+    36,
+    130,
+    `<ellipse cx="18" cy="10" rx="6" ry="8" fill="#ffb3c7" stroke="#b5587a" stroke-width="2"/>
+     <path d="M18 18C10 34 26 50 18 66C10 82 26 98 18 114" stroke="#f6c6ff" stroke-width="3" fill="none" stroke-linecap="round"/>
+     <g fill="#e8b8ff" stroke="#9a6ab8" stroke-width="1.4">
+       <ellipse cx="13" cy="28" rx="5" ry="3.5"/><ellipse cx="23" cy="42" rx="5" ry="3.5"/><ellipse cx="13" cy="56" rx="5" ry="3.5"/>
+       <ellipse cx="23" cy="72" rx="5" ry="3.5"/><ellipse cx="13" cy="88" rx="5" ry="3.5"/><ellipse cx="23" cy="104" rx="5" ry="3.5"/>
+     </g>
+     <g fill="#8fe3ff"><circle cx="18" cy="118" r="2.6"/><circle cx="14" cy="124" r="1.8"/><circle cx="22" cy="127" r="1.8"/></g>`,
+  ),
+  plankton: svg(
+    90,
+    70,
+    `<g fill="#8fe3ff">
+       <circle cx="20" cy="30" r="9" opacity=".18"/><circle cx="20" cy="30" r="3"/>
+       <circle cx="44" cy="16" r="8" opacity=".18"/><circle cx="44" cy="16" r="2.6"/>
+       <circle cx="66" cy="36" r="10" opacity=".18"/><circle cx="66" cy="36" r="3.4"/>
+       <circle cx="38" cy="48" r="7" opacity=".18"/><circle cx="38" cy="48" r="2.4"/>
+       <circle cx="78" cy="14" r="6" opacity=".18"/><circle cx="78" cy="14" r="2"/>
+       <circle cx="12" cy="56" r="6" opacity=".18"/><circle cx="12" cy="56" r="2"/>
+       <circle cx="58" cy="60" r="6" opacity=".18"/><circle cx="58" cy="60" r="2"/>
+     </g>
+     <g fill="#ffb3e6"><circle cx="30" cy="22" r="1.8"/><circle cx="54" cy="30" r="1.8"/><circle cx="26" cy="40" r="1.6"/><circle cx="74" cy="52" r="1.6"/></g>`,
+  ),
 };

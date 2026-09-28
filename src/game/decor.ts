@@ -32,7 +32,7 @@ export function placeDecor(state: GameState, id: string, at?: { x: number; y: nu
   if (!def) return { ok: false, reason: 'unknown' } as Fail<'unknown'>;
   if (availableCount(state, id) <= 0) return { ok: false, reason: 'none-left' } as Fail<'none-left'>;
   if (state.decor.placed.length >= MAX_PLACED) return { ok: false, reason: 'full' } as Fail<'full'>;
-  const spot = at ?? { x: 200 + (Math.random() - 0.5) * 80, y: def.place === 'floor' ? -12 : -190 };
+  const spot = at ?? { x: 200 + (Math.random() - 0.5) * 120, y: def.place === 'floor' ? -12 : -250 - Math.random() * 230 };
   const uid = newUid(state, 'd');
   state.decor.placed.push({ uid, id, ...clampPlacement(def, spot.x, spot.y), flip: false });
   return { ok: true as const, uid, def };
