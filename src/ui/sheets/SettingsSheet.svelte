@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { closeSheet, dev, game, rename, resetAll } from '../../app/actions';
+  import { closeSheet, dev, game, openSheet, rename, resetAll } from '../../app/actions';
+  import { ICONS } from '../../art/icons';
   import { NAME_MAX } from '../../game/state';
   import Sheet from '../Sheet.svelte';
   import InstallGuide from './InstallGuide.svelte';
@@ -29,6 +30,9 @@
 </script>
 
 <Sheet title="設定と記録" kind="settings" onclose={closeSheet}>
+  <button class="help-link" type="button" onclick={() => openSheet('help')}>
+    {@html ICONS.book}<span>あそびかた</span><span class="arrow" aria-hidden="true"></span>
+  </button>
   <SoundSettings />
   <InstallGuide />
 
@@ -63,6 +67,41 @@
 </Sheet>
 
 <style>
+  .help-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    margin-bottom: 16px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #16305c, #07173a);
+    color: var(--on-sea);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .help-link :global(svg) {
+    width: 22px;
+    height: 22px;
+  }
+
+  .help-link span:not(.arrow) {
+    flex: 1;
+    text-align: left;
+  }
+
+  .arrow {
+    width: 8px;
+    height: 8px;
+    border-top: 2.5px solid currentColor;
+    border-right: 2.5px solid currentColor;
+    transform: rotate(45deg);
+  }
+
   .rename {
     display: grid;
     gap: 6px;

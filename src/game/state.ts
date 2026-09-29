@@ -3,6 +3,7 @@
 import type { StatId } from './data/care';
 import { CREATURE_BY_ID } from './data/creatures';
 import { clampPlacement, DECOR_BY_ID, FLOOR_BY_ID, MAX_PLACED } from './data/decor';
+import { INTRO_KEYS, type IntroKey } from './data/intro-keys';
 import { ITEM_BY_ID, SLOTS, type Equipped } from './data/outfits';
 
 export const SAVE_VERSION = 2;
@@ -68,6 +69,8 @@ export interface GameState {
   nextUid: number;
   /** 深海探索の記録 */
   dive: { bestDepth: number; dives: number };
+  /** 案内：最初のチュートリアルを終えたか・説明を見た機能 */
+  help: { tutorialDone: boolean; seen: IntroKey[] };
 }
 
 export function createState(now = Date.now()): GameState {
@@ -100,6 +103,7 @@ export function createState(now = Date.now()): GameState {
     zukan: { mendako: { count: 1, firstAt: now } },
     nextUid: 3,
     dive: { bestDepth: 0, dives: 0 },
+    help: { tutorialDone: false, seen: [] },
   };
 }
 
@@ -204,6 +208,16 @@ export function normalizeState(input: unknown, now = Date.now()): GameState {
   if (dive) {
     state.dive.bestDepth = Math.max(0, Math.round(num(dive.bestDepth, 0)));
     state.dive.dives = Math.max(0, Math.floor(num(dive.dives, 0)));
+  }
+
+  // 案内（あとから追加）。これより前から遊んでいる人には、チュートリアルも初めての説明も出さない
+  const help = obj(saved.help);
+  if (help) {
+    state.help.tutorialDone = help.tutorialDone === true;
+    const seen = Array.isArray(help.seen) ? help.seen : [];
+    state.help.seen = INTRO_KEYS.filter((key) => seen.includes(key));
+  } else {
+    state.help = { tutorialDone: true, seen: [...INTRO_KEYS] };
   }
 
   // 通し番号は、使われている番号より大きくしておく

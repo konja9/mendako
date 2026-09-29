@@ -1,13 +1,17 @@
 <script lang="ts">
-  import { mode } from '../app/ui-state';
+  import { introCard, mode, naming, tutorialStep } from '../app/ui-state';
   import ActionBar from './ActionBar.svelte';
   import Bubble from './Bubble.svelte';
   import CatchOverlay from './CatchOverlay.svelte';
   import Celebrate from './Celebrate.svelte';
+  import Coach from './Coach.svelte';
   import DiveOverlay from './DiveOverlay.svelte';
   import Hud from './Hud.svelte';
+  import IntroCard from './IntroCard.svelte';
+  import NameDialog from './NameDialog.svelte';
   import SheetHost from './SheetHost.svelte';
   import Status from './Status.svelte';
+  import TitleScreen from './TitleScreen.svelte';
   import Toast from './Toast.svelte';
 </script>
 
@@ -25,10 +29,21 @@
 <Bubble />
 <SheetHost />
 <Celebrate />
-{#if $mode === 'catch'}
+{#if $mode === 'title'}
+  <TitleScreen />
+{:else if $mode === 'catch'}
   <CatchOverlay />
 {:else if $mode === 'dive'}
   <DiveOverlay />
+{/if}
+{#if $naming}
+  <NameDialog />
+{/if}
+{#if $tutorialStep && $mode === 'home'}
+  <Coach />
+{/if}
+{#if $introCard}
+  <IntroCard />
 {/if}
 
 <style>

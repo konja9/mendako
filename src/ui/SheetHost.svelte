@@ -4,6 +4,7 @@
   import DiveSelectSheet from './sheets/DiveSelectSheet.svelte';
   import DressSheet from './sheets/DressSheet.svelte';
   import FoodSheet from './sheets/FoodSheet.svelte';
+  import HelpSheet from './sheets/HelpSheet.svelte';
   import SettingsSheet from './sheets/SettingsSheet.svelte';
   import ZukanSheet from './sheets/ZukanSheet.svelte';
 </script>
@@ -20,4 +21,6 @@
   <ZukanSheet />
 {:else if $sheet === 'dive'}
   <DiveSelectSheet />
+{:else if $sheet === 'help'}
+  <HelpSheet />
 {/if}

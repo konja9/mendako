@@ -13,9 +13,11 @@ import { clearSave, loadSave, writeSave } from '../game/save';
 import { createState, normalizeState } from '../game/state';
 import { createStore } from '../game/store';
 import * as Visitors from '../game/visitors';
+import { TIPS } from '../game/data/help';
 import { playSfx } from '../audio';
 import { bus, type ScreenPoint } from './events';
-import { catchHud, decorSelected, diveHud, mode, pendingBuy, sheet, tryOn, type SheetKind } from './ui-state';
+import { showIntro } from './onboarding';
+import { catchHud, decorSelected, diveHud, introCard, mode, naming, pendingBuy, sheet, tryOn, tutorialStep, type SheetKind } from './ui-state';
 
 export const game = createStore(normalizeState(loadSave()), writeSave);
 const away = game.update((s) => ({ ...Care.tick(s), arrivals: Visitors.rollVisitors(s) }));
@@ -101,6 +103,7 @@ export function toggleSleep() {
   const { sleeping } = game.update((s) => Care.toggleSleep(s));
   playSfx(sleeping ? 'sleep' : 'wake');
   bus.emit('toast', sleeping ? 'おやすみ… げんきがたまるよ' : 'おはよう！');
+  if (sleeping) showIntro('sleep');
 }
 
 // ---------- ミニゲーム ----------
@@ -114,6 +117,8 @@ export function startPlay() {
     bus.emit('toast', FAIL[check.reason]);
     return;
   }
+  // 初めてのときは遊びかたを見てから始める
+  if (showIntro('play', startPlay)) return;
   lastPlay = null;
   sheet.set(null);
   catchHud.set({ phase: 'intro', count: '3', time: 30, score: 0, pearls: 0, result: null });
@@ -149,6 +154,8 @@ export function openSheet(kind: SheetKind) {
   closeSheet();
   playSfx('tap');
   sheet.set(kind);
+  // 初めて開く機能は、説明カードを重ねて出す
+  if (kind === 'dress' || kind === 'decor' || kind === 'zukan' || kind === 'dive') showIntro(kind);
 }
 
 export function closeSheet() {
@@ -354,10 +361,12 @@ export function meetVisitor(uid: string, point: ScreenPoint | null) {
 }
 
 function announceArrivals(arrivals: { id: string }[]) {
-  if (!arrivals.length) return;
+  // スタート画面の間は知らせない（水槽に来ていることは、はじめたあとに見える）
+  if (!arrivals.length || get(mode) === 'title') return;
   const names = arrivals.map((a) => Visitors.creatureName(a.id));
   playSfx('visitor');
   bus.emit('toast', arrivals.length === 1 ? `${names[0]}が遊びに来たよ` : `${names.length}匹が遊びに来たよ`);
+  if (get(mode) === 'home' && !get(sheet)) showIntro('visitor');
 }
 
 // ---------- 設定 ----------
@@ -404,9 +413,12 @@ export const dev = {
 export function resetAll() {
   clearSave();
   game.replace(createState());
-  sheet.set(null);
-  tryOn.set(null);
-  bus.emit('toast', '最初から始めるよ');
+  closeSheet();
+  naming.set(false);
+  tutorialStep.set(null);
+  introCard.set(null);
+  // スタート画面から、はじめての人と同じ流れで始める
+  mode.set('title');
 }
 
 // ---------- 時間の流れ ----------
@@ -415,8 +427,15 @@ function chatter() {
   const state = game.get();
   const condition = Care.conditionOf(state);
   const lines = LINES[condition];
-  if (lines.length && !get(sheet) && get(mode) === 'home' && !document.hidden) {
-    bus.emit('say', { text: lines[Math.floor(Math.random() * lines.length)] });
+  const quiet = get(sheet) || get(mode) !== 'home' || get(tutorialStep) || get(introCard) || document.hidden;
+  if (lines.length && !quiet) {
+    // 調子がよいときは、ときどき深海の豆知識をつぶやく
+    const seaTips = TIPS.filter((t) => t.kind === 'sea');
+    if ((condition === 'great' || condition === 'normal') && Math.random() < 0.25) {
+      bus.emit('say', { text: `知ってた？ ${seaTips[Math.floor(Math.random() * seaTips.length)].text}`, ms: 5200 });
+    } else {
+      bus.emit('say', { text: lines[Math.floor(Math.random() * lines.length)] });
+    }
   }
   const urgent = condition === 'hungry' || condition === 'tired' || condition === 'sad';
   setTimeout(chatter, (urgent ? 9000 : 16000) + Math.random() * 8000);
@@ -434,14 +453,16 @@ export function startLoops() {
   });
 
   setTimeout(chatter, 6000);
+}
 
+/** スタート画面から水槽に来たときのあいさつ（はじめての人は、名前つけと案内が代わりに入る） */
+export function greet() {
   const state = game.get();
   const waiting = state.visitors.filter((v) => !v.met).length;
   if (away.minutes > 20) {
     bus.emit('toast', waiting ? `おかえり！ 水槽にお客さんが来てるよ` : away.wokeUp ? 'おかえり！ ぐっすり寝てげんきだよ' : 'おかえり！');
-  } else if (state.counts.fed + state.counts.petted === 0) {
-    setTimeout(() => bus.emit('say', { text: `はじめまして、${state.name}だよ。タップするとなでられるよ`, ms: 4200 }), 800);
   } else {
     announceArrivals(away.arrivals);
   }
+  if (!state.sleeping) setTimeout(() => bus.emit('say', { text: `${state.name}だよ。来てくれてうれしいな`, ms: 2600 }), 900);
 }

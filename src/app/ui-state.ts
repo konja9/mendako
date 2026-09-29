@@ -1,12 +1,14 @@
 // 保存しない「画面の状態」。Svelte と Pixi の両方から読む。
 
 import { writable } from 'svelte/store';
+import type { IntroKey } from '../game/data/intro-keys';
 import type { ScreenPoint } from './events';
 
-export type Mode = 'home' | 'catch' | 'dive';
-export type SheetKind = 'food' | 'dress' | 'settings' | 'decor' | 'zukan' | 'dive';
+export type Mode = 'title' | 'home' | 'catch' | 'dive';
+export type SheetKind = 'food' | 'dress' | 'settings' | 'decor' | 'zukan' | 'dive' | 'help';
 
-export const mode = writable<Mode>('home');
+/** 開いたときはスタート画面から */
+export const mode = writable<Mode>('title');
 export const sheet = writable<SheetKind | null>(null);
 /** きせかえで試着中のアイテム */
 export const tryOn = writable<string | null>(null);
@@ -16,6 +18,18 @@ export const decorSelected = writable<string | null>(null);
 export const pendingBuy = writable<{ kind: 'decor' | 'floor'; id: string } | null>(null);
 /** 画面下を覆っているシートの高さ（px）。水槽をその分持ち上げる */
 export const bottomInset = writable(0);
+
+// ---------- 案内 ----------
+
+/** はじめての人に、名前をつけてもらっているところ */
+export const naming = writable(false);
+
+export type TutorialStep = 'pet' | 'food' | 'status' | 'actions';
+/** はじめの案内の、いまの段階（案内中でなければ null） */
+export const tutorialStep = writable<TutorialStep | null>(null);
+
+/** 初めて使うときの説明カード。then は「わかった」を押したあとに続ける操作 */
+export const introCard = writable<{ key: IntroKey; then?: () => void } | null>(null);
 
 export interface CatchHud {
   phase: 'intro' | 'play' | 'result';

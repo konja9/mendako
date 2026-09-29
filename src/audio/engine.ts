@@ -14,7 +14,7 @@ let bgmGain: GainNode | null = null;
 let levels = { sfx: 0, bgm: 0 };
 
 /** 効果音・BGM の基準の大きさ。スマホのスピーカーで聞き取りやすく、割れない大きさに合わせてある */
-export const SFX_GAIN = 2.2;
+export const SFX_GAIN = 1.5;
 export const BGM_GAIN = 1.2;
 const readyListeners: ((out: AudioOut) => void)[] = [];
 
