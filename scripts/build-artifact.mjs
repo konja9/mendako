@@ -1,5 +1,6 @@
 // `vite build` の結果（dist/）から、claude.ai の公開ページ用のファイル（dist-artifact/）を作る。
 // 公開ページは <html> や <head> を自動で付けるので、それらのタグとスマホ余白の重複分を外す。
+// GitHub Pages 版だけで使うアイコンの指定（pages-only）も外す。
 
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -11,6 +12,7 @@ const out = join(root, 'dist-artifact');
 const html = await readFile(join(dist, 'index.html'), 'utf8');
 const page = html
   .replace(/<!-- standalone-only[\s\S]*?\/standalone-only -->\n?/, '')
+  .replace(/<!-- pages-only[\s\S]*?\/pages-only -->\n?/, '')
   .replace(/<!doctype html>\n?/i, '')
   .replace(/<\/?html[^>]*>\n?/g, '')
   .replace(/<\/?head>\n?/g, '')

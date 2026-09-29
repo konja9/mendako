@@ -4,6 +4,8 @@
 import 'pixi.js/unsafe-eval';
 import { mount } from 'svelte';
 import { startLoops } from './app/actions';
+import { startInstallWatch } from './app/install';
+import { startSound } from './app/sound';
 import App from './ui/App.svelte';
 import './ui/global.css';
 import { World } from './world/stage';
@@ -49,3 +51,5 @@ try {
 }
 
 startLoops();
+startSound();
+startInstallWatch();

@@ -2,6 +2,8 @@
   import { closeSheet, dev, game, rename, resetAll } from '../../app/actions';
   import { NAME_MAX } from '../../game/state';
   import Sheet from '../Sheet.svelte';
+  import InstallGuide from './InstallGuide.svelte';
+  import SoundSettings from './SoundSettings.svelte';
 
   let name = $state(game.get().name);
   let resetArmed = $state(false);
@@ -27,6 +29,9 @@
 </script>
 
 <Sheet title="設定と記録" kind="settings" onclose={closeSheet}>
+  <SoundSettings />
+  <InstallGuide />
+
   <form class="rename" onsubmit={submit}>
     <label for="name-input">名前</label>
     <div class="row">

@@ -2,6 +2,7 @@
   import { tick } from 'svelte';
   import { leaveDive, zoneName } from '../app/actions';
   import { bus } from '../app/events';
+  import { playSfx } from '../audio';
   import { diveHud } from '../app/ui-state';
   import { ICONS, PEARL } from '../art/icons';
 
@@ -29,6 +30,7 @@
   function toggleLight() {
     const next = !$diveHud.light;
     diveHud.update((h) => ({ ...h, light: next }));
+    playSfx('light');
     bus.emit('diveLight', next);
   }
 

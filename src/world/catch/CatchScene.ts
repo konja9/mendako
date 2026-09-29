@@ -5,6 +5,7 @@
 import { Container, Graphics, Rectangle, Sprite, Text, type FederatedPointerEvent, type Texture } from 'pixi.js';
 import { CATCH_ITEM_SIZE, drawCatchItem, type CatchKind } from '../../art/catch-items';
 import type { CatchHud } from '../../app/ui-state';
+import { playSfx } from '../../audio';
 import type { Equipped } from '../../game/data/outfits';
 import { Mendako } from '../tank/Mendako';
 import { canvasTexture } from '../textures';
@@ -69,6 +70,8 @@ export class CatchScene extends Container {
   private pearls = 0;
   private shownTime = CATCH_DURATION;
   private shownCount = '3';
+  /** 続けて取れた数（取る音が少しずつ高くなる） */
+  private streak = 0;
   private shownScore = 0;
   private shownPearls = 0;
 
@@ -82,6 +85,7 @@ export class CatchScene extends Container {
     private reducedMotion: boolean,
   ) {
     super();
+    playSfx('count');
     const tex = (kind: CatchKind) => canvasTexture(CATCH_ITEM_SIZE, CATCH_ITEM_SIZE, resolution, (ctx) => drawCatchItem(ctx, kind));
     this.textures = { snow: tex('snow'), copepod: tex('copepod'), pearl: tex('pearl'), trash: tex('trash') };
     this.player = new Mendako(resolution);
@@ -176,6 +180,7 @@ export class CatchScene extends Container {
       const count = this.introT < step ? '3' : this.introT < step * 2 ? '2' : this.introT < step * 3 ? '1' : 'スタート！';
       if (count !== this.shownCount) {
         this.shownCount = count;
+        playSfx(count === 'スタート！' ? 'go' : 'count');
         this.cb.hud({ count });
       }
       if (this.introT > step * 3 + 0.45) {
@@ -242,6 +247,8 @@ export class CatchScene extends Container {
       if (Math.hypot(sp.x - this.px, sp.y - cy) < catchR + item.kind.r) {
         if (item.kind.id === 'trash') {
           if (this.stunned <= 0) {
+            this.streak = 0;
+            playSfx('miss');
             this.score = Math.max(0, this.score + item.kind.points);
             this.stunned = 0.9;
             this.player.express('tickled', 900);
@@ -250,6 +257,9 @@ export class CatchScene extends Container {
         } else {
           this.score += item.kind.points;
           this.pearls += item.kind.pearl ?? 0;
+          this.streak += 1;
+          if (item.kind.pearl) playSfx('pearl');
+          else playSfx('catch', { pitch: 1 + Math.min(this.streak - 1, 10) * 0.06 });
           this.pop(sp.x, sp.y, item.kind.pearl ? '真珠！' : `+${item.kind.points}`, item.kind.pearl ? '#fff1a0' : '#ffffff');
         }
         sp.destroy();

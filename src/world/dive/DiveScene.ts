@@ -10,6 +10,7 @@ import { MATERIAL_BY_ID } from '../../game/data/materials';
 import type { ZoneDef } from '../../game/data/zones';
 import type { Equipped } from '../../game/data/outfits';
 import type { DiveHud } from '../../app/ui-state';
+import { playSfx } from '../../audio';
 import { Ocean } from '../tank/Ocean';
 import { Mendako } from '../tank/Mendako';
 import { glowTexture, svgTexture } from '../textures';
@@ -383,6 +384,7 @@ export class DiveScene extends Container {
           e.flee = 1.4;
           e.fleeDir = x < this.px ? -1 : 1;
           e.progress = 0;
+          playSfx('flee');
           this.pop(x, sy - 30, 'にげちゃった…', '#b3cbeb');
           continue;
         }
@@ -399,6 +401,7 @@ export class DiveScene extends Container {
           if (e.progress >= 1) {
             e.met = true;
             this.met.add(def.id);
+            playSfx('meet');
             this.pop(x, sy - e.r - 16, 'であえた！', '#ffd66b');
             this.cb.meet(def.id);
             this.cb.hud({ met: this.met.size });
@@ -415,9 +418,11 @@ export class DiveScene extends Container {
           e.taken = true;
           if (e.item.kind === 'trash') {
             this.trash += 1;
+            playSfx('trash');
             this.pop(x, sy - 20, 'ゴミを拾った', '#b3cbeb');
           } else {
             this.materials[e.item.id] = (this.materials[e.item.id] ?? 0) + 1;
+            playSfx('pickup');
             this.pop(x, sy - 20, `+${MATERIAL_BY_ID[e.item.id].name}`);
           }
         }
@@ -454,6 +459,7 @@ export class DiveScene extends Container {
     this.gauge = Math.max(0, this.gauge - BUMP_COST);
     this.stunned = 0.7;
     this.invulnerable = 1.6;
+    playSfx('bump');
     this.player.express('tickled', 900);
     const owned = Object.keys(this.materials).filter((id) => this.materials[id] > 0);
     if (owned.length) {

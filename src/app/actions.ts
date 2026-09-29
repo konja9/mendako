@@ -13,6 +13,7 @@ import { clearSave, loadSave, writeSave } from '../game/save';
 import { createState, normalizeState } from '../game/state';
 import { createStore } from '../game/store';
 import * as Visitors from '../game/visitors';
+import { playSfx } from '../audio';
 import { bus, type ScreenPoint } from './events';
 import { catchHud, decorSelected, diveHud, mode, pendingBuy, sheet, tryOn, type SheetKind } from './ui-state';
 
@@ -37,7 +38,11 @@ const LINES: Record<Care.Condition, string[]> = {
 const pearlsShort = (need = 0) => `真珠があと${need}個たりないよ`;
 
 function celebrateLater(stageUp: Care.StageInfo | null, delay = 700) {
-  if (stageUp) setTimeout(() => bus.emit('celebrate', stageUp), delay);
+  if (!stageUp) return;
+  setTimeout(() => {
+    bus.emit('celebrate', stageUp);
+    playSfx('levelUp');
+  }, delay);
 }
 
 // ---------- お世話 ----------
@@ -46,13 +51,16 @@ export function petMendako(point: ScreenPoint | null = null) {
   const result = game.update((s) => Care.pet(s));
   if (!result.ok) {
     if (result.reason === 'tickled') {
+      playSfx('pet', { pitch: 1.3 });
       bus.emit('express', { expression: 'tickled', ms: 1400 });
       bus.emit('say', { text: 'くすぐったい〜！', ms: 1800 });
     } else {
+      playSfx('nope');
       bus.emit('toast', FAIL[result.reason]);
     }
     return;
   }
+  playSfx('pet', { pitch: 0.94 + Math.random() * 0.12 });
   bus.emit('squish');
   bus.emit('express', { expression: 'happy', ms: 1200 });
   bus.emit('hearts', point);
@@ -63,10 +71,12 @@ export function petMendako(point: ScreenPoint | null = null) {
 export async function feedFood(foodId: FoodId) {
   const result = game.update((s) => Care.feed(s, foodId));
   if (!result.ok) {
+    playSfx('nope');
     bus.emit('toast', result.reason === 'pearls' ? pearlsShort(result.need) : FAIL[result.reason]);
     return;
   }
   sheet.set(null);
+  playSfx('drop');
   // ごはんが落ちてくる演出を待つ（描画側が応答しなくても先へ進める）
   await new Promise<void>((resolve) => {
     const timer = setTimeout(resolve, 1600);
@@ -78,6 +88,7 @@ export async function feedFood(foodId: FoodId) {
       },
     });
   });
+  playSfx('munch');
   bus.emit('express', { expression: 'eat', ms: 1300 });
   bus.emit('sparkle', 3);
   setTimeout(() => bus.emit('express', { expression: 'happy', ms: 1200 }), 1300);
@@ -88,6 +99,7 @@ export async function feedFood(foodId: FoodId) {
 
 export function toggleSleep() {
   const { sleeping } = game.update((s) => Care.toggleSleep(s));
+  playSfx(sleeping ? 'sleep' : 'wake');
   bus.emit('toast', sleeping ? 'おやすみ… げんきがたまるよ' : 'おはよう！');
 }
 
@@ -98,6 +110,7 @@ let lastPlay: Care.PlayResult | null = null;
 export function startPlay() {
   const check = Care.canPlay(game.get());
   if (!check.ok) {
+    playSfx('nope');
     bus.emit('toast', FAIL[check.reason]);
     return;
   }
@@ -110,6 +123,7 @@ export function startPlay() {
 /** ミニゲームが終わったときに描画側から呼ばれる */
 export function finishCatch(score: number, pearls: number) {
   lastPlay = game.update((s) => Care.finishPlay(s, { score, pearls }));
+  playSfx('finish');
   catchHud.update((hud) => ({ ...hud, phase: 'result', result: { score, reward: lastPlay!.reward, isBest: lastPlay!.isBest } }));
 }
 
@@ -133,6 +147,7 @@ export function leaveCatch() {
 /** シートを開く（前のシートの試着や選択は片付ける） */
 export function openSheet(kind: SheetKind) {
   closeSheet();
+  playSfx('tap');
   sheet.set(kind);
 }
 
@@ -153,6 +168,7 @@ export function chooseOutfit(itemId: string) {
   } else {
     tryOn.set(get(tryOn) === itemId ? null : itemId);
   }
+  playSfx('equip');
   bus.emit('squish');
 }
 
@@ -165,9 +181,11 @@ export function buyTryOn() {
     return r;
   });
   if (!result.ok) {
+    playSfx('nope');
     bus.emit('toast', result.reason === 'pearls' ? pearlsShort(result.need) : '買えなかったよ');
     return;
   }
+  playSfx('buy');
   tryOn.set(null);
   bus.emit('toast', `${result.item.name}を買ったよ！`);
   bus.emit('express', { expression: 'happy', ms: 1400 });
@@ -188,12 +206,14 @@ export function startDive(zoneId: string) {
       tired: `げんきが${Dive.DIVE_ENERGY}ないと潜れないよ。寝かせてあげよう`,
       locked: '図鑑の生き物をもっと見つけると行けるよ',
     };
+    playSfx('nope');
     bus.emit('toast', msg[result.reason] ?? '潜れなかったよ');
     return;
   }
   lastDive = null;
   diveSetup = { zone: result.zone, plan: Dive.planDive(result.zone) };
   closeSheet();
+  playSfx('diveStart');
   mode.set('dive');
 }
 
@@ -201,6 +221,7 @@ export function startDive(zoneId: string) {
 export function finishDive(result: Dive.DiveResult) {
   const reward = game.update((s) => Dive.finishDive(s, result));
   lastDive = reward;
+  playSfx(result.reachedBottom ? 'bottom' : 'surface');
   diveHud.update((hud) => ({
     ...hud,
     phase: 'result',
@@ -252,9 +273,11 @@ export function chooseDecor(id: string) {
   pendingBuy.set(null);
   const result = game.update((s) => Decor.placeDecor(s, id));
   if (!result.ok) {
+    playSfx('nope');
     bus.emit('toast', DECOR_FAIL[result.reason] ?? '置けなかったよ');
     return;
   }
+  playSfx('place');
   decorSelected.set(result.uid);
 }
 
@@ -264,6 +287,7 @@ export function chooseFloor(id: string) {
     return;
   }
   pendingBuy.set(null);
+  playSfx('place');
   game.update((s) => Decor.setFloor(s, id));
 }
 
@@ -273,26 +297,34 @@ export function buyPending() {
   if (!pending) return;
   const result = game.update((s) => (pending.kind === 'decor' ? Decor.buyDecor(s, pending.id) : Decor.buyFloor(s, pending.id)));
   if (!result.ok) {
+    playSfx('nope');
     bus.emit('toast', result.reason === 'pearls' ? pearlsShort(result.need) : '買えなかったよ');
     return;
   }
+  playSfx('buy');
   pendingBuy.set(null);
   bus.emit('toast', `${result.def.name}を買ったよ！`);
   if (pending.kind === 'decor') chooseDecor(pending.id);
 }
 
 export function moveDecor(uid: string, x: number, y: number) {
+  const before = game.get().decor.placed.find((p) => p.uid === uid);
+  // 動かしたときだけ「ことっ」（タップして選んだだけのときは鳴らさない）
+  if (before && Math.hypot(before.x - x, before.y - y) > 2) playSfx('place');
   game.update((s) => Decor.moveDecor(s, uid, x, y));
 }
 
 export function flipSelectedDecor() {
   const uid = get(decorSelected);
-  if (uid) game.update((s) => Decor.flipDecor(s, uid));
+  if (!uid) return;
+  playSfx('flip');
+  game.update((s) => Decor.flipDecor(s, uid));
 }
 
 export function storeSelectedDecor() {
   const uid = get(decorSelected);
   if (!uid) return;
+  playSfx('store');
   game.update((s) => Decor.storeDecor(s, uid));
   decorSelected.set(null);
 }
@@ -304,6 +336,7 @@ export const decorName = (id: string) => DECOR_BY_ID[id]?.name ?? FLOOR_BY_ID[id
 export function meetVisitor(uid: string, point: ScreenPoint | null) {
   const result = game.update((s) => Visitors.meetVisitor(s, uid));
   if (!result.ok) return;
+  playSfx(result.isNew ? 'discover' : 'hello');
   bus.emit('hearts', point);
   if (result.isNew) {
     bus.emit('toast', `図鑑に「${result.def.name}」が載ったよ！`);
@@ -313,13 +346,17 @@ export function meetVisitor(uid: string, point: ScreenPoint | null) {
     bus.emit('toast', `${result.def.name}がのんびりしてるよ`);
   }
   if (result.gift) {
-    setTimeout(() => bus.emit('toast', `おみやげに真珠を${result.gift}個もらったよ`), result.isNew ? 2200 : 0);
+    setTimeout(() => {
+      bus.emit('toast', `おみやげに真珠を${result.gift}個もらったよ`);
+      playSfx('pearl');
+    }, result.isNew ? 2200 : 400);
   }
 }
 
 function announceArrivals(arrivals: { id: string }[]) {
   if (!arrivals.length) return;
   const names = arrivals.map((a) => Visitors.creatureName(a.id));
+  playSfx('visitor');
   bus.emit('toast', arrivals.length === 1 ? `${names[0]}が遊びに来たよ` : `${names.length}匹が遊びに来たよ`);
 }
 

@@ -1,16 +1,18 @@
 {
   "name": "shinkai-pukapuka",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "深海いきもの育成＆きせかえブラウザゲーム（最初のキャラクターはめんだこ）",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
+    "build:pages": "vite build --mode pages",
     "preview": "vite preview --host",
     "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "test": "vitest run",
-    "build:artifact": "vite build && node scripts/build-artifact.mjs"
+    "build:artifact": "vite build && node scripts/build-artifact.mjs",
+    "make-icons": "node scripts/make-icons.mjs"
   },
   "engines": {
     "node": ">=22.12"
@@ -25,6 +27,7 @@
     "svelte-check": "^4.7.6",
     "typescript": "~6.0.3",
     "vite": "^8.3.1",
+    "vite-plugin-pwa": "^1.3.0",
     "vitest": "^5.0.2"
   }
 }
