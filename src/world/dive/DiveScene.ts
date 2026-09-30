@@ -1,10 +1,12 @@
-// 深海探索の画面。めんだこを指で泳がせ、ちょうちんの光で暗い海を照らしながら潜る。
+// 深海探索の画面。ちょうちんの光で暗い海を照らしながら潜る。
+// 操作はページのスクロールと同じ感覚：上にスワイプすると深く潜り、左右はめんだこが指の位置へ寄ってくる。
 // 座標：画面座標で描く。深さ d（m）の物は、ワールド上で y = d × PX_PER_M に置き、カメラで動かす。
 
 import { Container, Graphics, Rectangle, Sprite, Text, type FederatedPointerEvent, type Texture } from 'pixi.js';
 import { CREATURE_ART } from '../../art/creatures';
 import { HAZARD_ART, MATERIAL_ART } from '../../art/dive';
 import type { DiveResult, PlanItem } from '../../game/dive';
+import { createMotion, dragBy, PX_PER_M, release, step as stepMotion, type DiveMotion } from '../../game/dive-motion';
 import { CREATURE_BY_ID, type CreatureDef } from '../../game/data/creatures';
 import { MATERIAL_BY_ID } from '../../game/data/materials';
 import type { ZoneDef } from '../../game/data/zones';
@@ -16,9 +18,11 @@ import { Mendako } from '../tank/Mendako';
 import { glowTexture, svgTexture } from '../textures';
 import { Darkness } from './Darkness';
 
-const PX_PER_M = 4;
 const FIELD_MAX_W = 480;
-const DRAG_GAIN = 1.25;
+/** めんだこを置く高さ（画面の上からの割合） */
+const PLAYER_Y = 0.4;
+/** キーボードの ↑↓ で潜る速さ（px/秒） */
+const KEY_SCROLL = 520;
 const PLAYER_SIZE = 96;
 const PLAYER_R = 34;
 const BUMP_COST = 18;
@@ -69,13 +73,14 @@ export class DiveScene extends Container {
   private fieldW = 0;
   private px = 0;
   private py = 0;
-  private target = { x: 0, y: 0 };
-  private depth: number;
+  /** カメラの基準の高さ（めんだこの揺れはここに足す） */
+  private baseY = 0;
+  private target = { x: 0 };
+  private motion: DiveMotion;
   private speedPx = 0;
-  private lastPos = { x: 0, y: 0 };
+  private lastX = 0;
   private gauge = 100;
   private drainPerSec: number;
-  private baseSpeed: number;
   private light = true;
   private stunned = 0;
   private invulnerable = 0;
@@ -85,8 +90,10 @@ export class DiveScene extends Container {
   private materials: Record<string, number> = {};
   private trash = 0;
   private maxDepth: number;
-  private drag: { x: number; y: number } | null = null;
+  /** 指の縦の位置・最後に動いた時刻・縦の速さ（px/秒） */
+  private drag: { y: number; t: number; vy: number } | null = null;
   private keys = new Set<string>();
+  private keyScrolling = false;
   private shown = { depth: -1, gauge: -1, items: -1 };
 
   constructor(
@@ -98,12 +105,11 @@ export class DiveScene extends Container {
     private reducedMotion: boolean,
   ) {
     super();
-    this.depth = zone.top;
+    this.motion = createMotion(zone.top);
     this.maxDepth = zone.top;
-    // 普通の速さで泳ぐと 約2分で底に着き、探検ゲージが3割ほど残る
-    const span = zone.bottom - zone.top;
-    this.baseSpeed = span / (zone.bottom > 1000 ? 140 : 110);
-    this.drainPerSec = 68 / (span / this.baseSpeed);
+    // 探検ゲージは時間で減る（中深層は約150秒、漸深層は約200秒で尽きる）。
+    // 何もしなくても沈むが、底まで行くにはスワイプして潜る必要がある
+    this.drainPerSec = 100 / (zone.bottom > 1000 ? 200 : 150);
 
     this.ocean = new Ocean(resolution, reducedMotion);
     this.player = new Mendako(resolution * 0.6);
@@ -117,16 +123,25 @@ export class DiveScene extends Container {
     for (const item of plan) this.addEntity(item, resolution);
 
     this.eventMode = 'static';
-    this.on('pointerdown', (e: FederatedPointerEvent) => (this.drag = { x: e.global.x, y: e.global.y }));
+    this.on('pointerdown', this.onDown);
     this.on('globalpointermove', this.onMove);
-    this.on('pointerup', () => (this.drag = null));
-    this.on('pointerupoutside', () => (this.drag = null));
+    this.on('pointerup', this.onUp);
+    this.on('pointerupoutside', this.onUp);
     window.addEventListener('keydown', this.onKey);
     window.addEventListener('keyup', this.onKey);
     cb.hud({ phase: 'intro', zoneId: zone.id, depth: zone.top, gauge: 100, light: true, met: 0, items: 0, lastMet: null, result: null });
   }
 
   private lightRadius: number;
+
+  /** いまの深さ（m） */
+  get depth() {
+    return this.motion.depth;
+  }
+
+  set depth(value: number) {
+    this.motion.depth = value;
+  }
 
   private texture(key: string, svg: string, w: number, h: number, resolution: number) {
     let t = this.textures.get(key);
@@ -206,10 +221,10 @@ export class DiveScene extends Container {
     this.ocean.resize(w, h);
     this.darkness.resize(w, h);
     for (const e of this.entities) e.baseX = this.left + e.item.x * this.fieldW;
+    this.baseY = h * PLAYER_Y;
     if (first) {
-      this.px = this.target.x = w / 2;
-      this.py = this.target.y = h * 0.4;
-      this.lastPos = { x: this.px, y: this.py };
+      this.px = this.target.x = this.lastX = w / 2;
+      this.py = this.baseY;
     }
   }
 
@@ -222,11 +237,34 @@ export class DiveScene extends Container {
     if (this.phase === 'play') this.end(false);
   }
 
+  // ---- 指の操作：横はめんだこが指の位置へ、縦はスクロールと同じ（上へ動かすと深く潜る） ----
+
+  private onDown = (e: FederatedPointerEvent) => {
+    if (this.phase === 'done') return;
+    this.drag = { y: e.global.y, t: performance.now(), vy: 0 };
+    this.target.x = e.global.x;
+    // ふつうのスクロールと同じく、触ったら勢いは止まる
+    this.motion.velocity = 0;
+  };
+
   private onMove = (e: FederatedPointerEvent) => {
     if (!this.drag) return;
-    this.target.x += (e.global.x - this.drag.x) * DRAG_GAIN;
-    this.target.y += (e.global.y - this.drag.y) * DRAG_GAIN;
-    this.drag = { x: e.global.x, y: e.global.y };
+    this.target.x = e.global.x;
+    const now = performance.now();
+    const dy = e.global.y - this.drag.y;
+    const sec = Math.max(0.008, (now - this.drag.t) / 1000);
+    this.drag.vy = this.drag.vy * 0.5 + (dy / sec) * 0.5;
+    this.drag.y = e.global.y;
+    this.drag.t = now;
+    if (this.phase === 'play' && this.stunned <= 0) dragBy(this.motion, dy);
+  };
+
+  private onUp = () => {
+    if (!this.drag) return;
+    // 指を止めてから離したときは、勢いをつけない
+    const still = performance.now() - this.drag.t > 90;
+    release(this.motion, still || this.phase !== 'play' ? 0 : this.drag.vy);
+    this.drag = null;
   };
 
   private onKey = (e: KeyboardEvent) => {
@@ -272,27 +310,30 @@ export class DiveScene extends Container {
     const t = this.time;
     const { w, h } = this;
 
-    // ---- めんだこを動かす ----
-    if (this.phase !== 'done' && this.stunned <= 0) {
-      const kx = (this.keys.has('ArrowRight') ? 1 : 0) - (this.keys.has('ArrowLeft') ? 1 : 0);
-      const ky = (this.keys.has('ArrowDown') ? 1 : 0) - (this.keys.has('ArrowUp') ? 1 : 0);
-      this.target.x += kx * 360 * dt;
-      this.target.y += ky * 300 * dt;
+    // ---- めんだこを動かす（横）。キーボードは ←→ で横、↓↑ で深く／浅く ----
+    const kx = (this.keys.has('ArrowRight') ? 1 : 0) - (this.keys.has('ArrowLeft') ? 1 : 0);
+    const ky = (this.keys.has('ArrowDown') ? 1 : 0) - (this.keys.has('ArrowUp') ? 1 : 0);
+    if (this.phase !== 'done' && this.stunned <= 0) this.target.x += kx * 360 * dt;
+    if (this.phase === 'play' && !this.drag && this.stunned <= 0 && ky !== 0) {
+      dragBy(this.motion, -ky * KEY_SCROLL * dt);
+      this.keyScrolling = true;
+    } else if (this.keyScrolling && ky === 0) {
+      release(this.motion, 0);
+      this.keyScrolling = false;
     }
     this.target.x = Math.max(this.left + 40, Math.min(this.left + this.fieldW - 40, this.target.x));
-    this.target.y = Math.max(h * 0.24, Math.min(h * 0.74, this.target.y));
-    if (this.stunned <= 0) {
-      this.px += (this.target.x - this.px) * Math.min(1, dt * 8);
-      this.py += (this.target.y - this.py) * Math.min(1, dt * 8);
-    }
+    if (this.stunned <= 0) this.px += (this.target.x - this.px) * Math.min(1, dt * 12);
+    // 縦の位置は決まった高さで、ふわふわ揺れるだけ
+    this.py = this.baseY + (this.reducedMotion ? 0 : Math.sin(t * 1.6) * 4);
 
-    // ---- 潜る（下のほうへ泳ぐほど速く潜る）----
+    // ---- 潜る（スクロール）----
+    let scrollSpeed = 0;
     if (this.phase === 'play') {
-      const factor = Math.max(0.25, Math.min(3, 1 + (2.2 * (this.py - h * 0.4)) / (h * 0.35)));
-      this.depth = Math.min(this.zone.bottom, this.depth + this.baseSpeed * factor * dt);
+      const r = stepMotion(this.motion, dt, { top: this.zone.top, bottom: this.zone.bottom, stunned: this.stunned > 0 });
+      scrollSpeed = r.speed;
       this.maxDepth = Math.max(this.maxDepth, this.depth);
       this.gauge -= this.drainPerSec * dt;
-      if (this.depth >= this.zone.bottom) this.end(true);
+      if (r.atBottom) this.end(true);
       else if (this.gauge <= 0) {
         this.gauge = 0;
         this.end(false);
@@ -304,13 +345,12 @@ export class DiveScene extends Container {
     if (this.stunned > 0) this.stunned -= dt;
     if (this.invulnerable > 0) this.invulnerable -= dt;
 
-    // めんだこの速さ（画面上の動き＋潜る速さ）。恥ずかしがりの生き物が逃げるかの判定に使う
-    const moved = Math.hypot(this.px - this.lastPos.x, this.py - this.lastPos.y) / (dt || 1);
-    this.speedPx = moved;
-    this.lastPos = { x: this.px, y: this.py };
+    // めんだこの速さ（横の動き＋潜る・戻る速さ）。恥ずかしがりの生き物が逃げるかの判定に使う
+    this.speedPx = Math.hypot((this.px - this.lastX) / (dt || 1), scrollSpeed);
+    this.lastX = this.px;
 
     // ---- カメラ・背景 ----
-    const camY = this.py - this.depth * PX_PER_M;
+    const camY = this.baseY - this.depth * PX_PER_M;
     this.world.y = camY;
     this.above.y = camY;
     const k = (this.depth - this.zone.top) / (this.zone.bottom - this.zone.top);

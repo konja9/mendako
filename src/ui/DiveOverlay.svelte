@@ -64,7 +64,7 @@
     {#if $diveHud.phase === 'intro'}
       <div class="intro">
         <p class="zone">{zoneName($diveHud.zoneId)}</p>
-        <p class="help">画面のどこでも指でなぞって泳ごう。<br />下のほうへ泳ぐと速く潜れるよ。</p>
+        <p class="help">上にスワイプすると深く潜れるよ。<br />左右は、めんだこが指についてくる。</p>
         <p class="sub">光の輪に生き物を入れ続けると出会える。<br />ぶつかると探検ゲージが減るので気をつけて。</p>
       </div>
     {/if}

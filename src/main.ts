@@ -16,6 +16,18 @@ document.documentElement.lang = 'ja';
 // iOS Safari のピンチ拡大を止める
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 
+// iPhone で入力欄を使うと、キーボードの分だけ画面全体がずらされ、閉じても戻らないことがある
+// （ずれたままだと、見えているボタンとタップが効く位置が食い違う）。入力が終わったら元に戻す。
+document.addEventListener('focusout', (e) => {
+  if (!(e.target instanceof HTMLInputElement)) return;
+  setTimeout(() => {
+    if (document.activeElement instanceof HTMLInputElement) return;
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 60);
+});
+
 mount(App, { target: document.getElementById('app')! });
 
 const host = document.getElementById('world')!;

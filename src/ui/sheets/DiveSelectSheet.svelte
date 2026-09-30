@@ -11,7 +11,7 @@
 
 <Sheet title="どこへもぐる？" kind="dive" onclose={closeSheet}>
   <p class="sheet-hint">
-    げんきを{DIVE_ENERGY}使うよ。指でなぞって泳ぎ、光の輪に生き物を入れると出会える。いちばん深い記録 {$game.dive.bestDepth}m
+    げんきを{DIVE_ENERGY}使うよ。上にスワイプして潜り、光の輪に生き物を入れると出会える。いちばん深い記録 {$game.dive.bestDepth}m
   </p>
   <div class="zones">
     {#each ZONES as zone (zone.id)}
